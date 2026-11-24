@@ -1,0 +1,550 @@
+/* ==========================================================================
+   PixelForge 深色主题
+   ========================================================================== */
+
+.root {
+    -fx-font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: #1b1e23;
+    -fx-focus-color: #3b82f6;
+    -fx-faint-focus-color: transparent;
+}
+
+.app-root {
+    -fx-background-color: #1b1e23;
+}
+
+/* 深色主题下所有文字默认浅色（modena 默认深色文字，在深底上看不见） */
+.label {
+    -fx-text-fill: #d7dce3;
+}
+
+/* ---------------------------- 菜单栏 ---------------------------- */
+
+.app-menu-bar {
+    -fx-background-color: #22262c;
+    -fx-border-color: transparent transparent #2f343b transparent;
+    -fx-padding: 1 6 1 6;
+}
+
+.app-menu-bar .label {
+    -fx-text-fill: #cfd6df;
+}
+
+.app-menu-bar > .container > .menu-button {
+    -fx-background-radius: 5;
+    -fx-padding: 5 9 5 9;
+}
+
+.app-menu-bar > .container > .menu-button:hover,
+.app-menu-bar > .container > .menu-button:showing {
+    -fx-background-color: #333a44;
+}
+
+.context-menu {
+    -fx-background-color: #262b33;
+    -fx-background-radius: 6;
+    -fx-border-color: #3a414c;
+    -fx-border-radius: 6;
+    -fx-padding: 4;
+}
+
+.menu-item {
+    -fx-background-radius: 4;
+    -fx-padding: 5 12 5 12;
+}
+
+.menu-item .label {
+    -fx-text-fill: #d7dce3;
+}
+
+.menu-item:focused {
+    -fx-background-color: #2d6cdf;
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: #ffffff;
+}
+
+.separator .line {
+    -fx-border-color: #3a414c transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ---------------------------- 标题栏 ---------------------------- */
+
+.header-bar {
+    -fx-background-color: linear-gradient(to right, #232830, #1d2127);
+    -fx-padding: 9 14 9 14;
+    -fx-border-color: transparent transparent #2f343b transparent;
+}
+
+.brand-title {
+    -fx-text-fill: #eaf0f7;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.brand-sub {
+    -fx-text-fill: #7f8896;
+    -fx-font-size: 12px;
+}
+
+.header-doc {
+    -fx-text-fill: #9aa4b2;
+    -fx-font-size: 12px;
+    -fx-background-color: #2a2f37;
+    -fx-background-radius: 10;
+    -fx-padding: 3 12 3 12;
+}
+
+/* ---------------------------- 工具栏 ---------------------------- */
+
+.tool-palette {
+    -fx-background-color: #22262c;
+    -fx-border-color: transparent #2f343b transparent transparent;
+}
+
+.tool-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 7;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.tool-button:hover {
+    -fx-background-color: #2f353e;
+}
+
+.tool-button:selected {
+    -fx-background-color: #2d6cdf;
+}
+
+.tool-button:selected:hover {
+    -fx-background-color: #3a78e8;
+}
+
+.tool-palette-separator {
+    -fx-background-color: #333a44;
+}
+
+/* ---------------------------- 右侧面板 ---------------------------- */
+
+.right-panel-scroll {
+    -fx-background-color: #22262c;
+    -fx-border-color: transparent transparent transparent #2f343b;
+    -fx-padding: 0;
+}
+
+.right-panel-scroll > .viewport {
+    -fx-background-color: #22262c;
+}
+
+.right-panel {
+    -fx-background-color: #22262c;
+}
+
+.section-title {
+    -fx-text-fill: #8b93a1;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.hint-label {
+    -fx-text-fill: #6d7683;
+    -fx-font-size: 11.5px;
+}
+
+.hex-label {
+    -fx-text-fill: #aab3c0;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 12px;
+}
+
+.value-label {
+    -fx-text-fill: #aab3c0;
+    -fx-font-size: 12px;
+}
+
+.color-swatch {
+    -fx-cursor: hand;
+}
+
+.segment-button {
+    -fx-background-color: #2c323b;
+    -fx-text-fill: #c3cad4;
+    -fx-background-radius: 6;
+    -fx-padding: 5 10 5 10;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.segment-button:hover {
+    -fx-background-color: #353c47;
+}
+
+.segment-button:selected {
+    -fx-background-color: #2d6cdf;
+    -fx-text-fill: #ffffff;
+}
+
+/* ---------------------------- 控件 ---------------------------- */
+
+.slider .track {
+    -fx-background-color: #3f4652;
+    -fx-background-radius: 2;
+    -fx-pref-height: 5;
+}
+
+.slider .thumb {
+    -fx-background-color: #4a90e2;
+    -fx-background-radius: 8;
+    -fx-pref-width: 14;
+    -fx-pref-height: 14;
+}
+
+.slider .thumb:hover {
+    -fx-background-color: #63a4f0;
+}
+
+.color-picker-compact {
+    -fx-background-color: #2c323b;
+    -fx-background-radius: 6;
+    -fx-border-color: #3a414c;
+    -fx-border-radius: 6;
+    -fx-padding: 2 4 2 4;
+    -fx-cursor: hand;
+}
+
+.color-picker-compact > .color-picker-label,
+.color-picker-compact > .arrow-button,
+.color-picker-compact .color-picker-label,
+.color-picker-compact .color-picker-label > .label {
+    -fx-background-color: transparent;
+}
+
+.color-picker-compact > .color-picker-label > .label,
+.color-picker-compact .color-picker-label > .label {
+    -fx-text-fill: #d7dce3;
+}
+
+.color-picker-compact .arrow {
+    -fx-background-color: #9aa4b2;
+}
+
+.tooltip {
+    -fx-background-color: #2c323b;
+    -fx-text-fill: #dfe4ea;
+    -fx-background-radius: 6;
+    -fx-border-color: #3a414c;
+    -fx-border-radius: 6;
+    -fx-font-size: 12px;
+    -fx-padding: 5 9 5 9;
+}
+
+/* ---------------------------- 画布 ---------------------------- */
+
+.canvas-backdrop {
+    -fx-background-color: #14161a;
+}
+
+.canvas-scroll {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.canvas-scroll > .viewport {
+    -fx-background-color: #14161a;
+}
+
+.canvas-holder {
+    -fx-background-color: #14161a;
+}
+
+.artboard {
+    -fx-background-color: #ffffff;
+    -fx-border-color: rgba(0, 0, 0, 0.45);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 26, 0.15, 0, 8);
+}
+
+/* ---------------------------- 滚动条 ---------------------------- */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #3d4450;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #4c5461;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+.corner {
+    -fx-background-color: transparent;
+}
+
+/* ---------------------------- 状态栏 ---------------------------- */
+
+.status-bar {
+    -fx-background-color: #1d2025;
+    -fx-border-color: #2f343b transparent transparent transparent;
+    -fx-min-height: 26;
+}
+
+.status-message {
+    -fx-text-fill: #98a1ae;
+    -fx-font-size: 12px;
+}
+
+.status-label {
+    -fx-text-fill: #7f8896;
+    -fx-font-size: 12px;
+}
+
+.status-divider {
+    -fx-text-fill: #3a414c;
+    -fx-font-size: 11px;
+}
+
+/* ---------------------------- 输入控件 ---------------------------- */
+
+.text-field {
+    -fx-background-color: #2c323b;
+    -fx-text-fill: #e8eaee;
+    -fx-prompt-text-fill: #6d7683;
+    -fx-background-radius: 6;
+    -fx-border-color: #3a414c;
+    -fx-border-radius: 6;
+    -fx-padding: 5 9 5 9;
+}
+
+.text-field:focused {
+    -fx-border-color: #2d6cdf;
+}
+
+.text-area {
+    -fx-background-color: #2c323b;
+    -fx-text-fill: #e8eaee;
+    -fx-background-radius: 6;
+}
+
+.text-area .content {
+    -fx-background-color: #2c323b;
+}
+
+.text-area .scroll-pane,
+.text-area .scroll-pane .viewport {
+    -fx-background-color: #2c323b;
+}
+
+.combo-box {
+    -fx-background-color: #2c323b;
+    -fx-background-radius: 6;
+    -fx-border-color: #3a414c;
+    -fx-border-radius: 6;
+    -fx-padding: 2 4 2 4;
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: #d7dce3;
+    -fx-background-color: transparent;
+    -fx-padding: 3 6 3 6;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #262b33;
+    -fx-border-color: #3a414c;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.combo-box-popup .list-cell:hover,
+.combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: #2d6cdf;
+    -fx-text-fill: #ffffff;
+}
+
+.radio-button {
+    -fx-text-fill: #d7dce3;
+}
+
+.radio-button .radio {
+    -fx-background-color: #2c323b;
+    -fx-border-color: #4a5361;
+    -fx-border-radius: 8;
+}
+
+.radio-button:selected .dot {
+    -fx-background-color: #2d6cdf;
+}
+
+/* ---------------------------- 对话框 ---------------------------- */
+
+.dialog-pane {
+    -fx-background-color: #22262c;
+}
+
+.dialog-pane > .content.label,
+.dialog-pane .content .label {
+    -fx-text-fill: #d7dce3;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #1d2127;
+    -fx-padding: 14 16 14 16;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: #eaf0f7;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-background-color: #2d6cdf;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 6;
+    -fx-padding: 6 18 6 18;
+    -fx-cursor: hand;
+}
+
+.dialog-pane .button-bar .button:hover {
+    -fx-background-color: #3a78e8;
+}
+
+.dialog-pane .button-bar .button:cancel {
+    -fx-background-color: #2c323b;
+    -fx-text-fill: #c3cad4;
+}
+
+.dialog-pane .button-bar .button:cancel:hover {
+    -fx-background-color: #353c47;
+}
+
+.error-label {
+    -fx-text-fill: #ff6b6b;
+    -fx-font-size: 12px;
+}
+
+/* ---------------------------- 图层面板 ---------------------------- */
+
+.panel-button {
+    -fx-background-color: #2c323b;
+    -fx-text-fill: #c3cad4;
+    -fx-background-radius: 5;
+    -fx-padding: 4 6 4 6;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.panel-button:hover {
+    -fx-background-color: #353c47;
+}
+
+.panel-button:pressed {
+    -fx-background-color: #2d6cdf;
+}
+
+.layer-list {
+    -fx-background-color: #1b1e23;
+    -fx-background-radius: 6;
+    -fx-border-color: #2f343b;
+    -fx-border-radius: 6;
+    -fx-padding: 2;
+}
+
+.layer-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-text-fill: #d7dce3;
+}
+
+.layer-list .list-cell:filled:hover {
+    -fx-background-color: #262b33;
+}
+
+.layer-list .list-cell:filled:selected {
+    -fx-background-color: #2d6cdf2e;
+    -fx-border-color: #2d6cdf;
+    -fx-border-width: 0 0 0 2;
+}
+
+.layer-list .list-cell .label {
+    -fx-text-fill: #d7dce3;
+}
+
+.layer-thumb {
+    -fx-border-color: #3a414c;
+    -fx-border-width: 1;
+}
+
+.layer-name {
+    -fx-font-size: 12px;
+}
+
+.eye-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6d7683;
+    -fx-font-size: 13px;
+    -fx-padding: 0 4 0 4;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.eye-button:selected {
+    -fx-text-fill: #4a90e2;
+}
+
+.eye-button:hover {
+    -fx-background-color: #353c47;
+    -fx-background-radius: 4;
+}
+
+/* ---------------------------- 历史记录 ---------------------------- */
+
+.history-list {
+    -fx-background-color: #1b1e23;
+    -fx-background-radius: 6;
+    -fx-border-color: #2f343b;
+    -fx-border-radius: 6;
+    -fx-padding: 2;
+}
+
+.history-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #aab3c0;
+    -fx-font-size: 11.5px;
+    -fx-padding: 2 8 2 8;
+}
+
+.history-list .list-cell:filled:hover {
+    -fx-background-color: #262b33;
+}
+
+.history-list .list-cell:filled:selected {
+    -fx-background-color: #2d6cdf;
+    -fx-text-fill: #ffffff;
+}
