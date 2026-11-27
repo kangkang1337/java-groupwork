@@ -70,6 +70,7 @@ public final class PlayCheck {
         testFuelOnlyPitStop(data);
         testStartTireLegality(data);
         testSaveResumeConsistency(data);
+        testSavePhaseAndFinish(data);
         testSafetyCarTiming(data);
         testRedFlagPause(data);
         testSeedDeterminism(data);
@@ -271,6 +272,79 @@ public final class PlayCheck {
         check("旧版本存档被拒绝并提示原因", rejected);
     }
 
+/**
+     * 存档要恢复"比赛进行到哪一步"，完赛的比赛则不该再被存档。
+     *
+     * <p>这两条是读档流程里最容易漏的：
+     * ① 存档写了 formationLap，但读档没恢复，中途存档读回来会白跑一遍暖胎圈，
+     *    暖胎圈结束时还会重复写一条「绿旗：比赛开始」；
+     * ② 完赛后存档没被拦住，读档后模拟器认为比赛未结束，下一次 step() 会多推进一圈。</p>
+     */
+    private static void testSavePhaseAndFinish(GameData data) {
+        java.io.File phaseFile = new java.io.File(".tmp/save-phase-test.json");
+        phaseFile.getParentFile().mkdirs();
+
+        // ① 暖胎圈中存档 → peek 应读回 formationLap = true
+        var lineupA = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), 10, 55L, false, false);
+        var simA = new com.endurance.sim.RaceSimulator(lineupA.config(), lineupA.strategies());
+        simA.step();
+        boolean phaseRoundTrip = false;
+        try {
+            com.endurance.data.RaceSave.save(simA, true, phaseFile.toPath());
+            phaseRoundTrip = com.endurance.data.RaceSave.peek(phaseFile).formationLap();
+        } catch (Exception e) {
+            phaseRoundTrip = false;
+        }
+        lineupA.close();
+        check("存档能记录并读回比赛阶段（暖胎圈中）", phaseRoundTrip);
+
+        // 比赛中存档 → formationLap = false
+        var lineupB = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), 10, 55L, false, false);
+        var simB = new com.endurance.sim.RaceSimulator(lineupB.config(), lineupB.strategies());
+        for (int i = 0; i < 3; i++) {
+            simB.step();
+        }
+        boolean runningPhase = true;
+        try {
+            com.endurance.data.RaceSave.save(simB, false, phaseFile.toPath());
+            runningPhase = !com.endurance.data.RaceSave.peek(phaseFile).formationLap();
+        } catch (Exception e) {
+            runningPhase = false;
+        }
+
+        // ② 开赛事件幂等：暖胎圈结束重入时不能写两条
+        int beforeStart = simB.events().size();
+        simB.markRaceStart();
+        simB.markRaceStart();
+        boolean idempotent = simB.events().size() == beforeStart + 1;
+        check("正常比赛存档读回时阶段为「比赛中」", runningPhase);
+        check("开赛事件只记录一次（重复调用 markRaceStart）", idempotent);
+        lineupB.close();
+
+        // ③ 完赛的比赛不允许存档
+        var lineupC = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), 5, 66L, false, false);
+        var simC = new com.endurance.sim.RaceSimulator(lineupC.config(), lineupC.strategies());
+        simC.run();
+        boolean rejected = false;
+        try {
+            com.endurance.data.RaceSave.capture(simC, false);
+        } catch (IllegalStateException expected) {
+            rejected = expected.getMessage() != null && expected.getMessage().contains("结束");
+        }
+        check("跑完的比赛拒绝存档", rejected);
+
+        // ④ 完赛后继续推进不会多跑一圈（结算面板上点「下一圈」走的就是这里）
+        int lapsAtFinish = simC.completedLaps();
+        int eventsAtFinish = simC.events().size();
+        boolean stepped = simC.step();
+        check("完赛后 step() 返回 false 且不多跑一圈",
+                !stepped && simC.completedLaps() == lapsAtFinish
+                        && simC.events().size() == eventsAtFinish);
+        lineupC.close();
+    }
     /** P0-5：强制 3 圈安全车，必须恰好 3 圈，且第 4 圈不再处于安全车。 */
     private static void testSafetyCarTiming(GameData data) {
         var lineup = com.endurance.setup.RaceSetup.build(

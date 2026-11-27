@@ -60,6 +60,9 @@ public class RaceSimulator {
     private int flagLaps;
     /** 红旗剩余圈数（比赛中止，车辆不动）。 */
     private int redFlagLaps;
+    /** 是否已经喊过绿旗开赛（保证开赛事件只记录一次）。 */
+    private boolean raceStarted;
+
     private boolean finished;
     private RaceResult result;
 
@@ -518,6 +521,7 @@ public class RaceSimulator {
                             int safetyCarRemaining, boolean safetyCarThisLap,
                             int redFlagLaps, com.endurance.model.RaceFlag flag, int flagLaps,
                             com.endurance.model.RaceFlag lapFlag, long randomState,
+                            boolean raceStarted,
                             List<RaceEvent> restoredEvents, List<LapResult> restoredLaps,
                             List<PitRecord> restoredPits,
                             Map<Integer, Integer> positions) {
@@ -531,8 +535,9 @@ public class RaceSimulator {
         this.flagLaps = Math.max(0, flagLaps);
         this.lapFlag = lapFlag;
         this.random.setState(randomState);
-        this.finished = false;
-        this.result = null;
+        // 原来的比赛进行到哪一步，读回来就该是哪一步：
+        // 暖胎圈状态跟着 raceStarted 走，否则暖胎圈会白重放一遍
+        this.raceStarted = raceStarted;
 
         events.clear();
         events.addAll(restoredEvents);
@@ -550,6 +555,12 @@ public class RaceSimulator {
                 }
             }
         }
+
+        // 比赛是否结束由圈数决定，不能无条件清成"未结束"：
+        // 否则完赛存档读回来，下一次 step() 会再推进额外一圈，还会重复播报冲线
+        this.finished = this.completedLaps >= config.totalLaps();
+        // buildResult() 只用当前车况和逐圈记录，重建不会重复写事件
+        this.result = this.finished ? buildResult() : null;
     }
     /** 已完成圈数。 */
     public int completedLaps() {
@@ -591,9 +602,23 @@ public class RaceSimulator {
                 "安全车出动！全场减速，进站代价降低"));
     }
 
-    /** 发车：暖胎圈结束（或跳过）时喊一声绿旗。 */
+    /**
+     * 发车：暖胎圈结束（或跳过）时喊一声绿旗。
+     *
+     * <p>幂等：读档时暖胎圈会重新走一遍流程，这里再喊一次就会在事件流里
+     * 出现两条"绿旗：比赛开始"。开赛只该记录一次。</p>
+     */
     public void markRaceStart() {
+        if (raceStarted) {
+            return;
+        }
+        raceStarted = true;
         events.add(new RaceEvent(0, RaceEvent.Type.FLAG, "绿旗：比赛开始"));
+    }
+
+    /** 比赛是否已经正式开始（暖胎圈之后）。 */
+    public boolean raceStarted() {
+        return raceStarted;
     }
 
     /** 当前赛道旗语（比赛结束后统一显示格子旗）。 */

@@ -752,8 +752,13 @@ public class MainWindow {
         if (simulator == null) {
             return;
         }
+        // 跑完的比赛存下去没有意义，读回来只会「复活」一场已结束的比赛
+        if (simulator.isFinished()) {
+            statusLabel.setText("比赛已结束，不需要存档");
+            return;
+        }
         try {
-            // 存档要把"是否还在暖胎圈"一起记下，读档后直接进比赛
+            // 存档要把「是否还在暖胎圈」一起记下，读档后据此恢复比赛阶段
             RaceSave.save(simulator, session.isFormationLap(), RaceSave.defaultFile());
             statusLabel.setText("已存档 · 第 " + simulator.completedLaps() + " / "
                     + simulator.totalLaps() + " 圈（saves/race.json）");
@@ -779,6 +784,8 @@ public class MainWindow {
                 tires.put(tire.id(), tire);
             }
             RaceSave.restore(file.toFile(), simulator, tires);
+            // 恢复比赛阶段：中途存档读回来不该再跑一遍暖胎圈
+            session.restorePhase(meta.formationLap());
 
             resultShown = false;
             hideResultOverlay();

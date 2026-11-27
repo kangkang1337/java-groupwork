@@ -49,6 +49,19 @@ public class RaceSession {
         timer.start();
     }
 
+    /**
+     * 读档时恢复比赛阶段。
+     *
+     * <p>直接赋值而不是走 {@link #skipFormation()}：开赛事件已经从存档里
+     * 恢复过了，这里再喊一次就重复了。</p>
+     */
+    public void restorePhase(boolean inFormationLap) {
+        this.formationLap = inFormationLap;
+        this.formationProgress = 0;
+        this.phase = 0;
+        this.lastNanos = -1;
+    }
+
     public void stop() {
         running = false;
         timer.stop();

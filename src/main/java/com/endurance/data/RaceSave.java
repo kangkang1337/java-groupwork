@@ -52,6 +52,10 @@ public final class RaceSave {
      * @param formationLap 当前是否还在暖胎圈（读档后直接进入比赛，只作记录）
      */
     public static String capture(RaceSimulator simulator, boolean formationLap) {
+        // 比赛已经跑完就没有"中途"可言：存下去读回来只会复活一场结束的比赛
+        if (simulator.isFinished()) {
+            throw new IllegalStateException("比赛已经结束，不需要存档");
+        }
         JsonWriter.Obj root = JsonWriter.obj()
                 .put("version", VERSION)
                 .put("trackId", simulator.config().track().id())
@@ -68,6 +72,7 @@ public final class RaceSave {
                 .put("flag", simulator.rawFlag().name())
                 .put("flagLaps", simulator.flagLaps())
                 .put("lapFlag", simulator.lapFlagValue().name())
+                .put("raceStarted", simulator.raceStarted())
                 .put("formationLap", formationLap);
 
         JsonWriter.Arr cars = JsonWriter.arr();
@@ -272,6 +277,7 @@ public final class RaceSave {
                 (int) root.opt("flagLaps", new Json.JsonValue.Num(0)).asDouble(),
                 RaceFlag.valueOf(root.opt("lapFlag", new Json.JsonValue.Str("GREEN")).asString()),
                 Long.parseLong(root.get("randomState").asString()),
+                root.opt("raceStarted", new Json.JsonValue.Bool(false)).asBool(),
                 events, laps, pits, positions);
 
         // 策略层状态
@@ -309,7 +315,8 @@ public final class RaceSave {
 
         return new Meta(trackId,
                 Long.parseLong(root.get("seed").asString()),
-                (int) root.get("completedLaps").asDouble());
+                (int) root.get("completedLaps").asDouble(),
+                root.opt("formationLap", new Json.JsonValue.Bool(false)).asBool());
     }
 
     /** 只读存档头信息，用来决定"该装配哪一场比赛"。 */
@@ -321,10 +328,17 @@ public final class RaceSave {
         }
         return new Meta(root.get("trackId").asString(),
                 Long.parseLong(root.get("seed").asString()),
-                (int) root.get("completedLaps").asDouble());
+                (int) root.get("completedLaps").asDouble(),
+                root.opt("formationLap", new Json.JsonValue.Bool(false)).asBool());
     }
 
-    /** 存档里记录的"这是哪一场"。 */
-    public record Meta(String trackId, long seed, int completedLaps) {
+    /**
+     * 存档里记录的"这是哪一场、进行到哪一步"。
+     *
+     * <p>带上 {@code formationLap}：读档后界面要据此恢复比赛阶段，
+     * 否则新建的比赛总是从暖胎圈开始，中途存档读回来会白跑一遍暖胎圈、
+     * 还会重复写一条"绿旗：比赛开始"。</p>
+     */
+    public record Meta(String trackId, long seed, int completedLaps, boolean formationLap) {
     }
 }
