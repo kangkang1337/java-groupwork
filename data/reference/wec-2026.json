@@ -1,0 +1,48 @@
+{
+  "source": "https://www.fiawec.com/en/page/resultats-1",
+  "note": "FIA WEC 2026 赛季 Hypercar 组决赛成绩，用于校准本项目的仿真模型",
+  "races": [
+    {
+      "event": "6 Hours of Fuji 2026",
+      "round": "Round 7",
+      "track": "Fuji Speedway",
+      "lengthKm": 4.563,
+      "turns": 16,
+      "sessionSeconds": 21661.299,
+      "results": [
+        { "pos": 1,  "car": 8,   "team": "TOYOTA RACING",            "laps": 203, "totalSeconds": 21661.299, "gapSeconds": 0.0,    "bestLap": 91.159 },
+        { "pos": 2,  "car": 36,  "team": "ALPINE ENDURANCE TEAM",    "laps": 203, "totalSeconds": 21661.890, "gapSeconds": 0.591,  "bestLap": 90.486 },
+        { "pos": 3,  "car": 15,  "team": "BMW M TEAM WRT",           "laps": 203, "totalSeconds": 21667.714, "gapSeconds": 6.415,  "bestLap": 91.472 },
+        { "pos": 4,  "car": 35,  "team": "ALPINE ENDURANCE TEAM",    "laps": 203, "totalSeconds": 21668.998, "gapSeconds": 7.699,  "bestLap": 90.748 },
+        { "pos": 5,  "car": 38,  "team": "CADILLAC HERTZ TEAM JOTA", "laps": 203, "totalSeconds": 21669.441, "gapSeconds": 8.142,  "bestLap": 91.138 },
+        { "pos": 6,  "car": 94,  "team": "PEUGEOT TOTALENERGIES",    "laps": 203, "totalSeconds": 21671.475, "gapSeconds": 10.176, "bestLap": 91.783 },
+        { "pos": 7,  "car": 12,  "team": "CADILLAC HERTZ TEAM JOTA", "laps": 203, "totalSeconds": 21674.796, "gapSeconds": 13.497, "bestLap": 91.471 },
+        { "pos": 8,  "car": 7,   "team": "TOYOTA RACING",            "laps": 203, "totalSeconds": 21675.505, "gapSeconds": 14.206, "bestLap": 91.114 },
+        { "pos": 9,  "car": 9,   "team": "ASTON MARTIN THOR TEAM",   "laps": 203, "totalSeconds": 21685.536, "gapSeconds": 24.237, "bestLap": 91.120 },
+        { "pos": 10, "car": 51,  "team": "FERRARI AF CORSE",         "laps": 203, "totalSeconds": 21687.742, "gapSeconds": 26.443, "bestLap": 91.618 },
+        { "pos": 12, "car": 83,  "team": "AF CORSE",                 "laps": 202, "totalSeconds": 21679.464, "gapSeconds": 0.0,    "bestLap": 91.463 },
+        { "pos": 13, "car": 20,  "team": "BMW M TEAM WRT",           "laps": 202, "totalSeconds": 21710.476, "gapSeconds": 0.0,    "bestLap": 91.498 }
+      ]
+    },
+    {
+      "event": "6 Hours of Monza 2026",
+      "round": "Round 8",
+      "track": "Autodromo Nazionale Monza",
+      "lengthKm": 5.793,
+      "turns": 11,
+      "sessionSeconds": 21693.199,
+      "results": [
+        { "pos": 1,  "car": 38,  "team": "CADILLAC HERTZ TEAM JOTA", "laps": 191, "totalSeconds": 21693.199, "gapSeconds": 0.0,    "bestLap": 94.874 },
+        { "pos": 2,  "car": 36,  "team": "ALPINE ENDURANCE TEAM",    "laps": 191, "totalSeconds": 21698.806, "gapSeconds": 5.607,  "bestLap": 94.699 },
+        { "pos": 3,  "car": 51,  "team": "FERRARI AF CORSE",         "laps": 191, "totalSeconds": 21728.966, "gapSeconds": 35.767, "bestLap": 94.627 },
+        { "pos": 4,  "car": 94,  "team": "PEUGEOT TOTALENERGIES",    "laps": 191, "totalSeconds": 21748.089, "gapSeconds": 54.890, "bestLap": 94.820 },
+        { "pos": 5,  "car": 15,  "team": "BMW M TEAM WRT",           "laps": 191, "totalSeconds": 21756.327, "gapSeconds": 63.128, "bestLap": 94.936 },
+        { "pos": 6,  "car": 83,  "team": "AF CORSE",                 "laps": 191, "totalSeconds": 21780.151, "gapSeconds": 86.952, "bestLap": 94.579 },
+        { "pos": 7,  "car": 20,  "team": "BMW M TEAM WRT",           "laps": 191, "totalSeconds": 21783.124, "gapSeconds": 89.925, "bestLap": 94.983 },
+        { "pos": 8,  "car": 93,  "team": "PEUGEOT TOTALENERGIES",    "laps": 191, "totalSeconds": 21785.077, "gapSeconds": 91.878, "bestLap": 94.840 },
+        { "pos": 9,  "car": 50,  "team": "FERRARI AF CORSE",         "laps": 191, "totalSeconds": 21786.098, "gapSeconds": 92.899, "bestLap": 94.731 },
+        { "pos": 10, "car": 8,   "team": "TOYOTA RACING",            "laps": 190, "totalSeconds": 21697.721, "gapSeconds": 0.0,    "bestLap": 95.217 }
+      ]
+    }
+  ]
+}

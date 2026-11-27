@@ -1,0 +1,15 @@
+{
+  "source": "https://api.open-meteo.com/v1/forecast （按 8 条赛道坐标实时抓取，免费无需 key）",
+  "fetchedAt": "2026-11-25",
+  "note": "这是抓取时刻的实况，用作天气面板的「参考实况」和雨战概率的种子。比赛里的气温/赛道温度仍由赛道参数决定（真实赛历在春夏季，和 11 月的实况不同），只有「降雨概率」会参考这里的 daily 最大值。",
+  "circuits": {
+    "imola": { "city": "Imola", "airTemp": 7.4, "humidity": 98, "precipitation": 0.0, "rainChance": 100, "condition": "阵雨" },
+    "spa": { "city": "Spa-Francorchamps", "airTemp": -1.8, "humidity": 75, "precipitation": 0.0, "rainChance": 0, "condition": "阴" },
+    "lemans": { "city": "Le Mans", "airTemp": 8.1, "humidity": 94, "precipitation": 0.0, "rainChance": 100, "condition": "毛毛雨" },
+    "saopaulo": { "city": "São Paulo", "airTemp": 22.3, "humidity": 91, "precipitation": 0.0, "rainChance": 100, "condition": "阴" },
+    "cota": { "city": "Austin", "airTemp": 5.7, "humidity": 83, "precipitation": 0.0, "rainChance": 26, "condition": "晴" },
+    "fuji": { "city": "Oyama", "airTemp": 10.2, "humidity": 38, "precipitation": 0.0, "rainChance": 37, "condition": "晴" },
+    "barcelona": { "city": "Barcelona", "airTemp": 8.2, "humidity": 88, "precipitation": 0.0, "rainChance": 68, "condition": "晴间多云" },
+    "monza": { "city": "Monza", "airTemp": 7.1, "humidity": 96, "precipitation": 0.4, "rainChance": 100, "condition": "小雨" }
+  }
+}

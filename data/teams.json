@@ -1,0 +1,122 @@
+{
+  "source": "https://www.fiawec.com/en/page/grid （2026 赛季参赛名单，车号/车队/车手为官方数据）",
+  "note": "除玩家自己的 Apex Racing 外，车队与车手均为 FIA WEC 2026 真实参赛单位。Hypercar 的 paceOffset 由富士站真实最快圈换算；LMGT3 按真实组别差距（每圈慢约 10 秒）设定，所以 GT3 车在总排名里会被拉开，但组内单独排名。",
+  "teams": [
+    {
+      "id": "apex",
+      "name": "Apex Racing",
+      "shortName": "Apex",
+      "paceOffset": 0.10,
+      "reliability": 0.96,
+      "color": "#7C5CFF",
+      "aggression": 0.55,
+      "personality": "balanced",
+      "category": "HYPERCAR",
+      "drivers": [
+        { "number": 77, "name": "1号", "aggression": 0.72, "startTire": "medium", "player": true },
+        { "number": 78, "name": "2号", "aggression": 0.68, "startTire": "medium" }
+      ]
+    },
+    {
+      "id": "toyota",
+      "name": "Toyota Racing",
+      "shortName": "Toyota",
+      "paceOffset": 0.40,
+      "reliability": 0.99,
+      "color": "#E10600",
+      "aggression": 0.50,
+      "personality": "conservative",
+      "category": "HYPERCAR",
+      "drivers": [
+        { "number": 7, "name": "M. Conway", "aggression": 0.70, "startTire": "medium" },
+        { "number": 8, "name": "B. Hartley", "aggression": 0.68, "startTire": "medium" }
+      ]
+    },
+    {
+      "id": "alpine",
+      "name": "Alpine Endurance Team",
+      "shortName": "Alpine",
+      "paceOffset": 0.05,
+      "reliability": 0.95,
+      "color": "#0B7CFF",
+      "aggression": 0.65,
+      "personality": "aggressive",
+      "category": "HYPERCAR",
+      "drivers": [
+        { "number": 35, "name": "A. Félix da Costa", "aggression": 0.82, "startTire": "soft" },
+        { "number": 36, "name": "F. Makowiecki", "aggression": 0.78, "startTire": "soft" }
+      ]
+    },
+    {
+      "id": "ferrari",
+      "name": "Ferrari AF Corse",
+      "shortName": "Ferrari",
+      "paceOffset": 0.70,
+      "reliability": 0.94,
+      "color": "#F5C518",
+      "aggression": 0.60,
+      "personality": "gambler",
+      "category": "HYPERCAR",
+      "drivers": [
+        { "number": 50, "name": "A. Fuoco", "aggression": 0.76, "startTire": "medium" },
+        { "number": 51, "name": "A. Pier Guidi", "aggression": 0.74, "startTire": "medium" }
+      ]
+    },
+    {
+      "id": "heart-of-racing",
+      "name": "Heart of Racing Team",
+      "shortName": "Heart",
+      "paceOffset": 9.60,
+      "reliability": 0.97,
+      "color": "#00C46A",
+      "aggression": 0.60,
+      "personality": "balanced",
+      "category": "LMGT3",
+      "drivers": [
+        { "number": 23, "name": "G. Newell", "aggression": 0.70, "startTire": "medium" }
+      ]
+    },
+    {
+      "id": "team-wrt",
+      "name": "Team WRT",
+      "shortName": "WRT",
+      "paceOffset": 9.90,
+      "reliability": 0.96,
+      "color": "#C8CFDA",
+      "aggression": 0.62,
+      "personality": "aggressive",
+      "category": "LMGT3",
+      "drivers": [
+        { "number": 32, "name": "D. Leung", "aggression": 0.74, "startTire": "medium" }
+      ]
+    },
+    {
+      "id": "tf-sport",
+      "name": "TF Sport",
+      "shortName": "TF",
+      "paceOffset": 10.20,
+      "reliability": 0.97,
+      "color": "#FF7A00",
+      "aggression": 0.58,
+      "personality": "conservative",
+      "category": "LMGT3",
+      "drivers": [
+        { "number": 33, "name": "B. Keating", "aggression": 0.68, "startTire": "medium" }
+      ]
+    },
+    {
+      "id": "vista-af-corse",
+      "name": "Vista AF Corse",
+      "shortName": "Vista",
+      "paceOffset": 10.40,
+      "reliability": 0.95,
+      "color": "#E4559B",
+      "aggression": 0.64,
+      "personality": "gambler",
+      "category": "LMGT3",
+      "drivers": [
+        { "number": 21, "name": "S. Mann", "aggression": 0.72, "startTire": "medium" }
+      ]
+    }
+  ]
+}

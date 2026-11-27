@@ -1,0 +1,25 @@
+# 编译产物
+out/
+target/
+*.class
+
+# 打包产物（package.bat 可重新生成）
+dist/
+
+# 日志
+logs/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# 系统
+Thumbs.db
+.DS_Store
+
+saves/
+.tmp/

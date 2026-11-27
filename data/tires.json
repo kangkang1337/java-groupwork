@@ -1,0 +1,60 @@
+{
+  "note": "颜色按 FIA WEC / Michelin 官方标识：白=软、黄=中、红=硬、蓝=雨。注意这跟 F1 正好相反——Michelin 官方说法是刻意反着设计的（按工作温度窗口配色，而不是按胶料软硬）。",
+  "tires": [
+    {
+      "id": "soft",
+      "name": "软胎",
+      "wearPerLap": 0.080,
+      "maxWearPenalty": 10.0,
+      "optimalTemp": 95,
+      "dryOffset": -1.15,
+      "dampOffset": 5.5,
+      "wetOffset": 14.0,
+      "color": "#E8EDF3"
+    },
+    {
+      "id": "medium",
+      "name": "中性胎",
+      "wearPerLap": 0.055,
+      "maxWearPenalty": 8.0,
+      "optimalTemp": 95,
+      "dryOffset": 0.00,
+      "dampOffset": 3.0,
+      "wetOffset": 11.0,
+      "color": "#FFC24B"
+    },
+    {
+      "id": "hard",
+      "name": "硬胎",
+      "wearPerLap": 0.034,
+      "maxWearPenalty": 5.0,
+      "optimalTemp": 100,
+      "dryOffset": 1.20,
+      "dampOffset": 4.0,
+      "wetOffset": 12.5,
+      "color": "#FF4D4D"
+    },
+    {
+      "id": "intermediate",
+      "name": "半雨胎",
+      "wearPerLap": 0.040,
+      "maxWearPenalty": 5.0,
+      "optimalTemp": 70,
+      "dryOffset": 13.00,
+      "dampOffset": 0.00,
+      "wetOffset": 1.5,
+      "color": "#38BDF8"
+    },
+    {
+      "id": "wet",
+      "name": "全雨胎",
+      "wearPerLap": 0.045,
+      "maxWearPenalty": 5.5,
+      "optimalTemp": 55,
+      "dryOffset": 19.00,
+      "dampOffset": 2.5,
+      "wetOffset": 0.00,
+      "color": "#1D4ED8"
+    }
+  ]
+}
