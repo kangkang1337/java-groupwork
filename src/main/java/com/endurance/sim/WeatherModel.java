@@ -47,40 +47,82 @@ public class WeatherModel {
         return switch (current) {
             case DRY -> {
                 // 变湿的两个方向都按赛道气候缩放，变干不受影响
-                if (roll < DRY_TO_WET * rainBias) {
+                double wet = transitionProbability(Weather.DRY, Weather.WET);
+                double damp = transitionProbability(Weather.DRY, Weather.DAMP);
+                if (roll < wet) {
                     yield Weather.WET;
                 }
-                if (roll < (DRY_TO_WET + DRY_TO_DAMP) * rainBias) {
+                if (roll < wet + damp) {
                     yield Weather.DAMP;
                 }
                 yield Weather.DRY;
             }
             case DAMP -> {
-                if (roll < DAMP_TO_WET) {
+                double wet = transitionProbability(Weather.DAMP, Weather.WET);
+                double dry = transitionProbability(Weather.DAMP, Weather.DRY);
+                if (roll < wet) {
                     yield Weather.WET;
                 }
-                if (roll < DAMP_TO_WET + DAMP_TO_DRY) {
+                if (roll < wet + dry) {
                     yield Weather.DRY;
                 }
                 yield Weather.DAMP;
             }
             case WET -> {
-                if (roll < WET_TO_DRY) {
+                double dry = transitionProbability(Weather.WET, Weather.DRY);
+                double damp = transitionProbability(Weather.WET, Weather.DAMP);
+                if (roll < dry) {
                     yield Weather.DRY;
                 }
-                if (roll < WET_TO_DRY + WET_TO_DAMP) {
+                if (roll < dry + damp) {
                     yield Weather.DAMP;
                 }
                 yield Weather.WET;
             }
         };
     }
-/** 未来 {@code laps} 圈内出现降雨的概率（0~1）。 */
+    /** 未来 {@code laps} 圈内出现湿天的概率（0~1），按当前天气和赛道转移概率计算。 */
     public double rainChance(int laps) {
+        return rainChance(Weather.DRY, laps);
+    }
+
+    /** 未来 {@code laps} 圈内至少出现一圈湿天的马尔可夫链概率（0~1）。 */
+    public double rainChance(Weather current, int laps) {
         if (!enabled || laps <= 0) {
             return 0;
         }
-        double perLap = DRY_TO_DAMP + DRY_TO_WET;
-        return Math.min(1.0, 1 - Math.pow(1 - perLap, laps));
+        // 要在预测区间里始终不下雨，下一圈必须先转干，之后每圈都保持干燥。
+        double staysDry = transitionProbability(current, Weather.DRY);
+        double dryToDry = transitionProbability(Weather.DRY, Weather.DRY);
+        staysDry *= Math.pow(dryToDry, laps - 1);
+        return Math.max(0, Math.min(1, 1 - staysDry));
+    }
+
+    private double transitionProbability(Weather from, Weather to) {
+        return switch (from) {
+            case DRY -> switch (to) {
+                case DRY -> 1 - wetProbability() - dampProbability();
+                case DAMP -> dampProbability();
+                case WET -> wetProbability();
+            };
+            case DAMP -> switch (to) {
+                case DRY -> DAMP_TO_DRY;
+                case DAMP -> 1 - DAMP_TO_DRY - DAMP_TO_WET;
+                case WET -> DAMP_TO_WET;
+            };
+            case WET -> switch (to) {
+                case DRY -> WET_TO_DRY;
+                case DAMP -> WET_TO_DAMP;
+                case WET -> 1 - WET_TO_DRY - WET_TO_DAMP;
+            };
+        };
+    }
+
+    private double wetProbability() {
+        return Math.min(1, DRY_TO_WET * rainBias);
+    }
+
+    private double dampProbability() {
+        return Math.min(1 - wetProbability(), DRY_TO_DAMP * rainBias);
     }
 }

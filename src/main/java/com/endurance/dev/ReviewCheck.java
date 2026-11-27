@@ -1,6 +1,7 @@
 package com.endurance.dev;
 
 import com.endurance.analysis.RaceReport;
+import com.endurance.analysis.RaceLog;
 import com.endurance.data.GameData;
 import com.endurance.data.Json;
 import com.endurance.data.JsonWriter;
@@ -36,6 +37,7 @@ public final class ReviewCheck {
             return;
         }
         testJsonWriter();
+        testCsvColumns();
         testLogging();
         testScore(data);
         testSaveLoad(data);
@@ -65,6 +67,20 @@ public final class ReviewCheck {
         check("JSON 往返：整数", (int) node.get("count").asDouble() == 7);
         check("JSON 往返：布尔", node.get("flag").asBool());
         check("JSON 往返：数组", node.get("list").asArray().size() == 3);
+    }
+
+    /** CSV 行必须按表头顺序写入组别与组内名次，并保持列数一致。 */
+    private static void testCsvColumns() {
+        RaceLog.Row row = new RaceLog.Row(7, 3, 51, "车手甲", "车队甲",
+                101.25, "中性胎", 0.4, 32.5, 8.75, 2,
+                true, false, true, "Hypercar", 2);
+        String[] lines = RaceLog.toCsv(List.of(row)).replace("\uFEFF", "").split("\\R");
+        String[] header = lines[0].split(",", -1);
+        String[] values = lines[1].split(",", -1);
+        check("CSV 数据列数与表头一致（" + values.length + "）", values.length == header.length);
+        check("CSV 组别和组内名次位于正确列",
+                values.length == 17 && values[2].equals("Hypercar")
+                        && values[3].equals("2") && values[4].equals("51"));
     }
 
     /** 日志必须真的写到文件里（打包后没有控制台，全靠它排错）。 */

@@ -69,6 +69,11 @@ public final class GameData {
         return tire;
     }
 
+    /** 按 id 查询轮胎配方；外部输入可能未知时使用，不会因找不到而抛异常。 */
+    public TireCompound findTire(String id) {
+        return tires.get(id);
+    }
+
     /** 常用配方的便捷访问（配置里不存在时返回列表第一条，避免空指针）。 */
     public TireCompound soft() {
         return tires.getOrDefault("soft", tires.values().iterator().next());

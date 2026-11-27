@@ -399,6 +399,7 @@ public class MainWindow {
     /** 开始一场新比赛。 */
     public void startRace(Track track, long seed) {
         this.track = track;
+        playerPanel.applyTrackRestrictions(track);
         if (session != null) {
             session.stop();
         }

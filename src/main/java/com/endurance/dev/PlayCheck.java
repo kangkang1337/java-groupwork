@@ -74,6 +74,7 @@ public final class PlayCheck {
         testSafetyCarTiming(data);
         testRedFlagPause(data);
         testSeedDeterminism(data);
+        testWeatherForecast(data);
     }
 
     /** 玩家排队一条进站指令，下一圈应该真的进站。 */
@@ -474,6 +475,22 @@ public final class PlayCheck {
                 && lemans.playerPanel().isTireEnabled("hard"));
     }
 
+    /** 天气面板直接展示仿真器按赛道倾向计算的预测。 */
+    private static void testWeatherForecast(GameData data) {
+        var lineup = com.endurance.setup.RaceSetup.build(
+                data, data.track("spa"), 8, 5150L, false, false);
+        RaceSimulator simulator = new RaceSimulator(lineup.config(), lineup.strategies());
+        com.endurance.sim.WeatherModel expectedModel = new com.endurance.sim.WeatherModel(
+                new java.util.Random(1), true, data.track("spa").rainBias());
+        double expectedChance = expectedModel.rainChance(simulator.currentWeather(), 5);
+        com.endurance.ui.WeatherPanel panel = new com.endurance.ui.WeatherPanel(java.util.Map.of());
+        panel.update(simulator);
+        check("天气面板展示包含斯帕降雨倾向的预测",
+                panel.rainText().equals(String.format(java.util.Locale.ROOT, "%.0f%%",
+                        expectedChance * 100)));
+        lineup.close();
+    }
+
     /** 复盘文案不能说反话：比理论最优快的时候不能写"慢了 0.0 秒"。 */
     private static void testReviewWording(GameData data) {
         var lineup = com.endurance.setup.RaceSetup.build(
@@ -700,12 +717,25 @@ public final class PlayCheck {
         window.selectRound(3);
         check("切到 R3（" + window.currentRound() + "）", window.currentRound() == 3);
         check("赛道换成勒芒", "lemans".equals(window.getTrack().id()));
+        check("切到勒芒后软/中/硬胎按钮全部启用",
+                window.playerPanel().isTireEnabled("soft")
+                        && window.playerPanel().isTireEnabled("medium")
+                        && window.playerPanel().isTireEnabled("hard"));
         check("圈数按勒芒折算（" + window.getSimulator().totalLaps() + "）",
                 window.getSimulator().totalLaps() == window.getTrack().defaultLaps());
         check("勒芒站有三组", window.getTrack().categories().size() == 3);
 
         window.selectRound(8);
         check("切到 R8 蒙扎", "monza".equals(window.getTrack().id()));
+        check("切到蒙扎后启用软/中胎并禁用硬胎",
+                window.playerPanel().isTireEnabled("soft")
+                        && window.playerPanel().isTireEnabled("medium")
+                        && !window.playerPanel().isTireEnabled("hard"));
+        window.selectRound(1);
+        check("切回伊莫拉后启用中/硬胎并禁用软胎",
+                !window.playerPanel().isTireEnabled("soft")
+                        && window.playerPanel().isTireEnabled("medium")
+                        && window.playerPanel().isTireEnabled("hard"));
         window.getSession().stepOnce();
         check("切站后比赛能继续推进", window.getSimulator().completedLaps() == 1);
     }

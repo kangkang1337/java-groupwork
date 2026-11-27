@@ -2,9 +2,13 @@ package com.endurance.dev;
 
 import com.endurance.ai.AiPersonality;
 import com.endurance.ai.AiStrategy;
+import com.endurance.ai.MonteCarloPlanner;
 import com.endurance.data.GameData;
 import com.endurance.model.Car;
+import com.endurance.model.Weather;
 import com.endurance.sim.LapResult;
+import com.endurance.sim.PitDecision;
+import com.endurance.sim.RaceContext;
 import com.endurance.sim.RaceResult;
 import com.endurance.sim.RaceSimulator;
 import com.endurance.strategy.Strategy;
@@ -32,6 +36,7 @@ public final class AiCheck {
             failed++;
             return;
         }
+        testEmergencyFallback(data);
         int races = args.length > 0 ? Integer.parseInt(args[0]) : 20;
 
         Map<AiPersonality, List<Integer>> pitLaps = new LinkedHashMap<>();
@@ -136,6 +141,73 @@ public final class AiCheck {
             }
         }
         return -1;
+    }
+
+    /** 紧急兜底只处理真的需要补油的情形，并遵守本站配方限制和天气。 */
+    private static void testEmergencyFallback(GameData data) {
+        com.endurance.model.Track track = data.track("imola");
+        var twoLapLineup = com.endurance.setup.RaceSetup.build(
+                data, track, 2, 711L, false, false);
+        Car twoLapCar = twoLapLineup.config().cars().get(0);
+        twoLapCar.setFuelKg(track.fuelPerLap() * 3.0);
+        PitDecision enoughFuel = emergencyDecision(
+                data, twoLapLineup.config(), twoLapCar, Weather.DRY, 2);
+        check("剩余两圈且油量足够时不触发紧急进站", enoughFuel == null);
+        twoLapLineup.close();
+
+        var dryLineup = com.endurance.setup.RaceSetup.build(
+                data, track, 2, 714L, false, false);
+        Car dryCar = dryLineup.config().cars().get(0);
+        dryCar.setFuelKg(track.fuelPerLap());
+        PitDecision dryDecision = emergencyDecision(
+                data, dryLineup.config(), dryCar, Weather.DRY, 2);
+        check("干天紧急进站选择本站开放的干胎", dryDecision != null
+                && dryDecision.compound() != null
+                && track.allowsCompound(dryDecision.compound().id())
+                && dryDecision.compound().timeOffset(Weather.DRY) < 8.0);
+        dryLineup.close();
+
+        var wetLineup = com.endurance.setup.RaceSetup.build(
+                data, track, 2, 712L, false, false);
+        Car wetCar = wetLineup.config().cars().get(0);
+        wetCar.setFuelKg(track.fuelPerLap());
+        PitDecision wetDecision = emergencyDecision(
+                data, wetLineup.config(), wetCar, Weather.WET, 2);
+        check("紧急进站按湿天选择雨胎", wetDecision != null && wetDecision.compound() != null
+                && wetDecision.compound().timeOffset(Weather.DRY) >= 8.0);
+        check("紧急进站只选择本站允许配方", wetDecision != null && wetDecision.compound() != null
+                && track.allowsCompound(wetDecision.compound().id()));
+        wetLineup.close();
+
+        var finalLapLineup = com.endurance.setup.RaceSetup.build(
+                data, track, 1, 713L, false, false);
+        Car finalLapCar = finalLapLineup.config().cars().get(0);
+        finalLapCar.setFuelKg(track.fuelPerLap() * 0.5);
+        PitDecision finalLapDecision = emergencyDecision(
+                data, finalLapLineup.config(), finalLapCar, Weather.DRY, 1);
+        // 末圈也要救：停一次约 20 秒，不动就是退赛 0 分
+        check("末圈油量不足时仍然进站", finalLapDecision != null
+                && finalLapDecision.fuelToAdd() > 0);
+        finalLapLineup.close();
+    }
+
+    private static PitDecision emergencyDecision(GameData data,
+                                                  com.endurance.model.RaceConfig config,
+                                                  Car car, Weather weather, int totalLaps) {
+        Map<String, com.endurance.model.TireCompound> tires = new LinkedHashMap<>();
+        for (var tire : data.tires()) {
+            tires.put(tire.id(), tire);
+        }
+        MonteCarloPlanner planner = new MonteCarloPlanner(2, 4);
+        try {
+            AiStrategy strategy = new AiStrategy(car.number(), AiPersonality.BALANCED,
+                    planner, tires, config, true);
+            RaceContext context = RaceContext.of(1, totalLaps, weather,
+                    config.track(), List.of(car));
+            return strategy.decide(context, car);
+        } finally {
+            planner.shutdown();
+        }
     }
 
     /** 至少两种性格的平均进站圈数差 2 圈以上，才算"性格真的有区别"。 */

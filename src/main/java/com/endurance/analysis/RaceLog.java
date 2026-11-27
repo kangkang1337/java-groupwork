@@ -136,6 +136,8 @@ public final class RaceLog {
         for (Row row : rows) {
             sb.append(row.lap()).append(',')
                     .append(row.position()).append(',')
+                    .append(escape(row.category())).append(',')
+                    .append(row.classPosition()).append(',')
                     .append(row.carNumber()).append(',')
                     .append(escape(row.driver())).append(',')
                     .append(escape(row.team())).append(',')

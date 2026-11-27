@@ -58,6 +58,23 @@ public final class NetCheck {
         // ---- 指令同步 ----
         String currentTire = tireOf(state, seat0Car);
         String targetTire = "hard".equals(currentTire) ? "medium" : "hard";
+        a.sendRaw("{\"type\":\"command\",\"tire\":\"unknown-tire\",\"fuel\":5}");
+        Json.JsonValue unknownTire = a.awaitType("error", 3000);
+        check("未知轮胎收到协议错误", unknownTire != null
+                && unknownTire.get("message").asString().contains("未知轮胎"));
+
+        a.sendRaw("{\"type\":\"command\",\"tire\":\"soft\",\"fuel\":5}");
+        Json.JsonValue restrictedTire = a.awaitType("error", 3000);
+        check("本站禁用的软胎被拒绝", restrictedTire != null
+                && restrictedTire.get("message").asString().contains("本站不允许"));
+
+        a.sendRaw("{\"type\":\"command\",\"tire\":\"hard\",\"fuel\":\"oops\"}");
+        Json.JsonValue invalidFuel = a.awaitType("error", 3000);
+        check("非数值油量收到协议错误", invalidFuel != null
+                && invalidFuel.get("message").asString().contains("有效数字"));
+        a.ping();
+        check("无效指令后连接仍然存活", a.awaitType("pong", 3000) != null && !a.isClosed());
+
         a.command(targetTire, 40);
         Json.JsonValue ack = a.awaitType("ack", 3000);
         check("服务器确认了进站指令", ack != null);

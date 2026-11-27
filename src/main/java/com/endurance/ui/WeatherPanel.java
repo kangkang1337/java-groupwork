@@ -88,9 +88,18 @@ public class WeatherPanel extends VBox {
                 simulator.config().track().trackTempCelsius()));
         humidity.setText(simulator.humidity() + "%");
 
+        // 已经在下雨时不再显示「降雨概率」：那会等于「未来还是雨天」的概率，
+        // 数字接近 100% 容易让人误以为马上要变天。直接写天气名更直白。
+        Weather current = simulator.currentWeather();
+        boolean wetNow = current != Weather.DRY;
         double chance = simulator.rainChance(5);
-        rain.setText(String.format(Locale.ROOT, "%.0f%%", chance * 100));
-        rain.setStyle("-fx-text-fill: " + (chance > 0.35 ? "#9ad1ff" : "#cfd6df") + ";");
+        if (wetNow) {
+            rain.setText(current.displayName());
+        } else {
+            rain.setText(String.format(Locale.ROOT, "%.0f%%", chance * 100));
+        }
+        double tintBasis = wetNow ? 1.0 : chance;
+        rain.setStyle("-fx-text-fill: " + (tintBasis > 0.35 ? "#9ad1ff" : "#cfd6df") + ";");
 
         for (int lap = 1; lap <= 5; lap++) {
             double single = 1 - Math.pow(1 - Math.max(0, Math.min(1, chance)), 1.0 / lap);

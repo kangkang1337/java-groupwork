@@ -669,7 +669,7 @@ public class RaceSimulator {
 
     /** 未来 N 圈内下雨的概率（0~1）。 */
     public double rainChance(int laps) {
-        return weatherModel.rainChance(laps);
+        return weatherModel.rainChance(weather, laps);
     }
 /** A. 超出赛道限制：激进 + 磨损高更容易冲出去，黑白旗警告 → 5 秒 → 更重。 */
     private void rollTrackLimits(int lap) {

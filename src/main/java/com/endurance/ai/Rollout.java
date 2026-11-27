@@ -95,7 +95,8 @@ public final class Rollout {
         }
 
         // 用与真实比赛一致的天气开关：比赛关了天气，推演里就不该下雨
-        WeatherModel weatherModel = new WeatherModel(random, snapshot.weatherEnabled());
+        WeatherModel weatherModel = new WeatherModel(random, snapshot.weatherEnabled(),
+                snapshot.track().rainBias());
         Weather weather = snapshot.weather();
         int remaining = snapshot.remainingLaps();
         double trackTemp = snapshot.track().trackTempCelsius();

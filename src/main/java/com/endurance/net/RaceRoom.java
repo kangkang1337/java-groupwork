@@ -232,19 +232,32 @@ public class RaceRoom {
             return;
         }
 
-        String tireId = msg.opt("tire", new com.endurance.data.Json.JsonValue.Str("")).asString();
-        TireCompound tire = data.tire(tireId);
+        com.endurance.data.Json.JsonValue tireValue = msg.opt(
+                "tire", new com.endurance.data.Json.JsonValue.Str(""));
+        if (!(tireValue instanceof com.endurance.data.Json.JsonValue.Str tireString)) {
+            connection.send(Protocol.error("轮胎 ID 必须是字符串"));
+            return;
+        }
+        String tireId = tireString.value();
+        TireCompound tire = data.findTire(tireId);
         if (tire == null) {
             connection.send(Protocol.error("未知轮胎：" + tireId));
             return;
         }
-        double fuel = msg.opt("fuel", new com.endurance.data.Json.JsonValue.Num(0)).asDouble();
-        if (fuel < 0 || fuel > 130) {
-            connection.send(Protocol.error("加油量必须在 0~130 kg 之间"));
+        if (!track.allowsCompound(tire.id())) {
+            connection.send(Protocol.error("本站不允许使用轮胎：" + tireId));
+            return;
+        }
+        com.endurance.data.Json.JsonValue fuelValue = msg.opt(
+                "fuel", new com.endurance.data.Json.JsonValue.Num(0));
+        if (!(fuelValue instanceof com.endurance.data.Json.JsonValue.Num fuelNumber)
+                || !Double.isFinite(fuelNumber.value())
+                || fuelNumber.value() < 0 || fuelNumber.value() > 130) {
+            connection.send(Protocol.error("加油量必须是 0~130 kg 之间的有效数字"));
             return;
         }
 
-        PitDecision decision = new PitDecision(tire, Math.round(fuel));
+        PitDecision decision = new PitDecision(tire, Math.round(fuelNumber.value()));
         strategy.queue(decision);
         connection.send(Protocol.ack("已排队：" + decision.describe() + "，下一圈执行"));
     }

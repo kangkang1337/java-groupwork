@@ -111,10 +111,9 @@ public class AiStrategy implements Strategy {
             }
         }
 
-        // 兜底：推演没跟上而油快没了，先自己进站
-        if (decision == null && !car.isRetired()
-                && car.fuelKg() < context.track().fuelPerLap() * 3.5) {
-            decision = emergencyPit(context);
+        // 兜底：推演没跟上且确实无法靠当前油量跑完时，才紧急进站。
+        if (decision == null && !car.isRetired() && needsEmergencyPit(context, car)) {
+            decision = emergencyPit(context, car);
         }
         if (decision != null) {
             cooldown = 3;
@@ -186,22 +185,58 @@ public class AiStrategy implements Strategy {
                 tires, cars);
     }
 
-    private PitDecision emergencyPit(RaceContext context) {
-        int left = Math.max(1, context.remainingLaps());
-        double fuel = Math.min(115, context.track().fuelPerLap() * left * 1.05 + 2);
-        return new PitDecision(bestDryTire(), Math.max(10, fuel));
+    private boolean needsEmergencyPit(RaceContext context, Car car) {
+        int left = context.remainingLaps();
+        double needed = context.track().fuelPerLap() * left;
+        // 末圈也救：进站多花一次停站时间，但至少能完赛；
+        // 不救就是直接退赛，0 分，怎么算都比停一次亏。
+        return left > 0
+                && car.fuelKg() < context.track().fuelPerLap() * 3.5
+                && needed > car.fuelKg();
     }
 
-    private TireCompound bestDryTire() {
+    private PitDecision emergencyPit(RaceContext context, Car car) {
+        int left = context.remainingLaps();
+        double needed = context.track().fuelPerLap() * left * 1.05 + 2 - car.fuelKg();
+        double fuel = Math.min(115, Math.max(10, needed));
+        return new PitDecision(emergencyTire(context), fuel);
+    }
+
+    private TireCompound emergencyTire(RaceContext context) {
+        boolean wetWeather = context.weather().isWet();
         TireCompound best = null;
         double bestScore = Double.MAX_VALUE;
         for (TireCompound tire : tires.values()) {
-            double score = tire.timeOffset(Weather.DRY);
+            if (!context.track().allowsCompound(tire.id())) {
+                continue;
+            }
+            boolean rainTire = tire.timeOffset(Weather.DRY) >= 8.0;
+            if (rainTire != wetWeather) {
+                continue;
+            }
+            double score = tire.timeOffset(context.weather());
             if (score < bestScore) {
                 bestScore = score;
                 best = tire;
             }
         }
-        return best == null ? tires.values().iterator().next() : best;
+        if (best != null) {
+            return best;
+        }
+        for (TireCompound tire : tires.values()) {
+            if (context.track().allowsCompound(tire.id())
+                    && tire.timeOffset(context.weather()) < bestScore) {
+                bestScore = tire.timeOffset(context.weather());
+                best = tire;
+            }
+        }
+        if (best == null) {
+            // 走到这里说明 tracks.json 和 tires.json 对不上：本站一个合法配方都没有。
+            // 与其偷偷用一条本站不允许的胎跑完全程，不如立刻暴露配置错误。
+            throw new IllegalStateException(
+                    "本站没有任何可用轮胎：" + context.track().id()
+                            + " / " + context.track().dryCompounds());
+        }
+        return best;
     }
 }

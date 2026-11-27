@@ -6,6 +6,10 @@ import com.endurance.data.Json;
 import com.endurance.model.Team;
 import com.endurance.model.TireCompound;
 import com.endurance.model.Track;
+import com.endurance.model.Weather;
+import com.endurance.sim.WeatherModel;
+
+import java.util.Random;
 
 /**
  * 数据层自检：验证自写 JSON 解析器的正确性，以及配置文件的完整性。
@@ -23,6 +27,7 @@ public final class DataCheck {
         testParserEscapes();
         testParserErrors();
         testCatalog();
+        testWeatherForecast();
 
         System.out.println();
         System.out.println("==== 结果: " + passed + " 通过 / " + failed + " 失败 ====");
@@ -159,6 +164,48 @@ public final class DataCheck {
         check("软胎磨损更快", soft.wearPerLap() > hard.wearPerLap());
         check("软胎寿命更短", soft.estimatedLifeLaps() < hard.estimatedLifeLaps());
         check("软胎磨穿惩罚更重", soft.maxWearPenalty() > hard.maxWearPenalty());
+    }
+
+    /** 预测概率按赛道降雨倾向、当前天气计算，并与固定种子的天气模拟吻合。 */
+    private static void testWeatherForecast() {
+        double spaChance = new WeatherModel(new Random(1), true, 1.8)
+                .rainChance(Weather.DRY, 5);
+        double cotaChance = new WeatherModel(new Random(1), true, 0.7)
+                .rainChance(Weather.DRY, 5);
+        double dampChance = new WeatherModel(new Random(1), true, 1.0)
+                .rainChance(Weather.DAMP, 5);
+        double wetChance = new WeatherModel(new Random(1), true, 1.0)
+                .rainChance(Weather.WET, 5);
+        check("高降雨倾向的五圈降雨概率高于低倾向", spaChance > cotaChance);
+        check("当前湿滑天气会提高未来降雨预测", dampChance > new WeatherModel(
+                new Random(1), true, 1.0).rainChance(Weather.DRY, 5));
+        check("当前大雨天气会提高未来降雨预测", wetChance > dampChance);
+        check("天气关闭时未来降雨概率为零",
+                new WeatherModel(new Random(1), false, 1.8)
+                        .rainChance(Weather.DRY, 5) == 0);
+
+        check("斯帕固定种子天气频率接近预测概率",
+                Math.abs(sampleRainChance(1.8) - spaChance) < 0.015);
+        check("COTA 固定种子天气频率接近预测概率",
+                Math.abs(sampleRainChance(0.7) - cotaChance) < 0.012);
+    }
+
+    private static double sampleRainChance(double rainBias) {
+        int samples = 10_000;
+        int rainy = 0;
+        Random random = new Random(5000L);
+        for (int sample = 0; sample < samples; sample++) {
+            WeatherModel model = new WeatherModel(random, true, rainBias);
+            Weather weather = Weather.DRY;
+            for (int lap = 0; lap < 5; lap++) {
+                weather = model.next(weather);
+                if (weather.isWet()) {
+                    rainy++;
+                    break;
+                }
+            }
+        }
+        return rainy / (double) samples;
     }
 
     // ------------------------------------------------------------------
