@@ -25,3 +25,10 @@ Thumbs.db
 # 运行时生成
 saves/
 .tmp/
+
+# 答辩与课程材料（本地准备，不进代码仓库）
+middle-pre/
+
+# 临时文档
+*.pptx
+*.docx
