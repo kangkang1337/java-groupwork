@@ -44,14 +44,25 @@ public final class RaceReport {
     }
 
     /**
-     * 不可避免的损耗：交通阻挡、起步混战、每圈的自然波动。
-     * 理论最优是"一台车单独跑"的理想值，真实比赛里拿不到，
-     * 所以打分前先扣掉这么多秒，否则所有人都会被算成不及格。
+     * 每圈不可避免的损耗（秒）：交通阻挡、起步混战、每圈的自然波动。
+     *
+     * <p>理论最优是"一台车单独跑"的理想值，真实比赛里拿不到，所以打分前先扣掉。
+     * 这部分损失是**按圈累积**的——跑 30 圈和跑 63 圈，被噪声吃掉的时间差一倍。
+     * 原来写死 12 秒只适配了短距离赛：63 圈时正常跑完也会累积 60~70 秒，
+     * 于是所有人都被算成 0 分，「待改进」完全失去区分度。</p>
      */
-    private static final double UNAVOIDABLE_LOSS_SECONDS = 12.0;
+    private static final double UNAVOIDABLE_LOSS_SECONDS = 1.0;
+
+    /** 容差下限：圈数很少时也要留一点余量。 */
+    private static final double MIN_UNAVOIDABLE_LOSS_SECONDS = 10.0;
 
     private RaceReport() {
         throw new AssertionError("工具类不允许实例化");
+    }
+
+    /** 这台车跑完 {@code laps} 圈，理论上最少会被噪声吃掉多少秒。 */
+    public static double unavoidableLoss(int laps) {
+        return Math.max(MIN_UNAVOIDABLE_LOSS_SECONDS, UNAVOIDABLE_LOSS_SECONDS * laps);
     }
 
     /** 分析一辆车的比赛表现。 */
@@ -117,7 +128,8 @@ public final class RaceReport {
         double lapLoss = laps.stream().filter(lap -> !lap.safetyCar())
                 .mapToDouble(lap -> lap.lapTime() - bestLap).sum();
 
-        double adjustedGap = Math.max(0, gap - UNAVOIDABLE_LOSS_SECONDS);
+        // 容差按实际完成的圈数累积：退赛的车跑得少，容差也小
+        double adjustedGap = Math.max(0, gap - unavoidableLoss(laps.size()));
         int score = entry.retired() ? 0
                 : (int) Math.round(Math.max(0, Math.min(100, 100 - adjustedGap * 2.5)));
         String grade = entry.retired() ? "退赛"
