@@ -75,6 +75,7 @@ public final class PlayCheck {
         testRedFlagPause(data);
         testSeedDeterminism(data);
         testWeatherForecast(data);
+        testTrackProgressMatchesStandings(data);
     }
 
     /** 玩家排队一条进站指令，下一圈应该真的进站。 */
@@ -345,6 +346,47 @@ public final class PlayCheck {
                 !stepped && simC.completedLaps() == lapsAtFinish
                         && simC.events().size() == eventsAtFinish);
         lineupC.close();
+    }
+/** 赛道上的前后顺序必须和排名表一致：慢车不能画到快车前面。 */
+    private static void testTrackProgressMatchesStandings(GameData data) {
+        var lineup = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), 20, 8899L, false, false);
+        var simulator = new com.endurance.sim.RaceSimulator(lineup.config(), lineup.strategies());
+        for (int i = 0; i < 12; i++) {
+            simulator.step();
+        }
+
+        var standings = simulator.liveStandings();
+        double avgLap = simulator.config().track().baseLapSeconds() + 4;
+        double leaderTime = standings.isEmpty() ? 0 : standings.get(0).totalTime();
+        double leadLaps = leaderTime / avgLap;
+        double phase = 0.42;
+
+        // 相邻两名之间：名次靠前的车，赛道进度必须更大（或落在同一小数相位内）
+        int violations = 0;
+        StringBuilder detail = new StringBuilder();
+        for (int i = 1; i < standings.size(); i++) {
+            var ahead = standings.get(i - 1);
+            var behind = standings.get(i);
+            double aheadFraction = com.endurance.ui.TrackView.progressOf(
+                    ahead, phase, leadLaps, avgLap);
+            double behindFraction = com.endurance.ui.TrackView.progressOf(
+                    behind, phase, leadLaps, avgLap);
+            // 差距小于半圈时直接比大小；跨圈的情况由小数相位兜底，不参与比较
+            double gapLaps = (behind.totalTime() - ahead.totalTime()) / avgLap;
+            if (gapLaps > 0 && gapLaps < 0.5 && behindFraction > aheadFraction) {
+                violations++;
+                if (detail.length() < 60) {
+                    detail.append("#").append(ahead.number()).append("(#")
+                            .append(i).append(") < #").append(behind.number())
+                            .append("(#").append(i + 1).append(") ");
+                }
+            }
+        }
+        lineup.close();
+        check("赛道上前后顺序与排名一致"
+                        + (violations == 0 ? "" : "（" + violations + " 处反了：" + detail + "）"),
+                violations == 0);
     }
     /** P0-5：强制 3 圈安全车，必须恰好 3 圈，且第 4 圈不再处于安全车。 */
     private static void testSafetyCarTiming(GameData data) {

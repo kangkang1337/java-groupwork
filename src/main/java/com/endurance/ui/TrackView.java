@@ -189,6 +189,22 @@ public class TrackView extends Region {
         g.strokeLine(sx - nx * half, sy - ny * half, sx + nx * half, sy + ny * half);
     }
 
+    /**
+     * 一台车在当前相位下的赛道进度（0~1，沿路径正向，越大越靠前）。
+     *
+     * <p>用时会**更长**的车才算落后，所以「落后圈数」一定是正数。
+     * 取小数部分是为了让落后整圈的车绕回赛道前面的位置，而不是堆在起点。</p>
+     */
+    public static double progressOf(Car car, double phase, double leadLaps, double avgLap) {
+        if (car.isRetired()) {
+            // 退赛车停在维修区入口
+            return 0.995;
+        }
+        double behindLaps = car.totalTime() / avgLap - leadLaps;
+        double fraction = phase - behindLaps;
+        return fraction - Math.floor(fraction);
+    }
+
     private void drawCars(GraphicsContext g, double scale, double offsetX, double offsetY) {
         List<Car> cars = simulator.cars();
         double avgLap = simulator.config().track().baseLapSeconds() + 4;
@@ -208,18 +224,10 @@ public class TrackView extends Region {
 
         for (int index = 0; index < cars.size(); index++) {
             Car car = cars.get(index);
-            double fraction;
-            if (car.isRetired()) {
-                // 退赛车停在维修区入口
-                fraction = 0.995;
-            } else {
-                // 真实相位 = 当前圈内进度 - 落后圈数，再取小数部分。
-                // 原来把落后量截断在 0.95 圈内，落后三四圈的 GT3 会全部堆在同一个点上互相盖住，
-                // 看起来就像"赛道上车变少了"。
-                double behindLaps = leadLaps - car.totalTime() / avgLap;
-                fraction = phase - behindLaps;
-                fraction -= Math.floor(fraction);
-            }
+            // 真实相位 = 当前圈内进度 - 落后圈数，再取小数部分。
+            // 原来把「落后圈数」写成 leadLaps - 车圈数，算出来是负数，
+            // 等于把慢车往前推——赛道上的前后顺序和排名表完全相反。
+            double fraction = progressOf(car, phase, leadLaps, avgLap);
             double[] point = path.pointAt(fraction);
 
             // 同一位置附近的车沿法线错开，避免完全重叠看不出是一队车
