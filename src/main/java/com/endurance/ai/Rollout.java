@@ -94,7 +94,8 @@ public final class Rollout {
             fuel[myIndex] = Math.min(130, fuel[myIndex] + candidate.fuelToAdd());
         }
 
-        WeatherModel weatherModel = new WeatherModel(random, true);
+        // 用与真实比赛一致的天气开关：比赛关了天气，推演里就不该下雨
+        WeatherModel weatherModel = new WeatherModel(random, snapshot.weatherEnabled());
         Weather weather = snapshot.weather();
         int remaining = snapshot.remainingLaps();
         double trackTemp = snapshot.track().trackTempCelsius();
@@ -120,7 +121,7 @@ public final class Rollout {
                 int lapsLeft = remaining - lap;
                 if (wear[i] > 0.65 || fuel[i] < fuelPerLap * 6) {
                     if (lapsLeft > 2) {
-                        TireCompound next = chooseTire(catalog, weather, lapsLeft);
+                        TireCompound next = chooseTire(snapshot.track(), catalog, weather, lapsLeft);
                         double addFuel = Math.min(120, fuelPerLap * lapsLeft * 1.05 + 2);
                         // 其他车按正常换胎进站估算
                         time[i] += snapshot.pitCost(addFuel, true);
@@ -189,11 +190,16 @@ public final class Rollout {
     }
 
     /** 挑一条适合当前天气、又撑得住剩余里程的轮胎。 */
-    private static TireCompound chooseTire(Map<String, TireCompound> catalog,
+    private static TireCompound chooseTire(com.endurance.model.Track track,
+                                           Map<String, TireCompound> catalog,
                                            Weather weather, int lapsLeft) {
         TireCompound best = null;
         double bestScore = Double.MAX_VALUE;
         for (TireCompound compound : catalog.values()) {
+            // 推演里的对手也不能用本站没有的配方
+            if (!track.allowsCompound(compound.id())) {
+                continue;
+            }
             double score = compound.timeOffset(weather);
             int life = compound.estimatedLifeLaps();
             if (life < lapsLeft) {

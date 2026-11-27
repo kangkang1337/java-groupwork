@@ -16,7 +16,8 @@
       "laps": 63,
       "wearScale": 0.80,
       "categories": ["HYPERCAR", "LMGT3"],
-      "dryCompounds": ["medium", "hard"]
+      "dryCompounds": ["medium", "hard"],
+      "rainBias": 1.1
     },
     {
       "id": "spa",
@@ -32,7 +33,8 @@
       "laps": 48,
       "wearScale": 0.75,
       "categories": ["HYPERCAR", "LMGT3"],
-      "dryCompounds": ["soft", "medium"]
+      "dryCompounds": ["soft", "medium"],
+      "rainBias": 1.8
     },
     {
       "id": "lemans",
@@ -48,7 +50,8 @@
       "laps": 28,
       "wearScale": 0.70,
       "categories": ["HYPERCAR", "LMGT3", "LMP2"],
-      "dryCompounds": ["soft", "medium", "hard"]
+      "dryCompounds": ["soft", "medium", "hard"],
+      "rainBias": 1.3
     },
     {
       "id": "saopaulo",
@@ -64,7 +67,8 @@
       "laps": 66,
       "wearScale": 0.85,
       "categories": ["HYPERCAR", "LMGT3"],
-      "dryCompounds": ["medium", "hard"]
+      "dryCompounds": ["medium", "hard"],
+      "rainBias": 1.5
     },
     {
       "id": "cota",
@@ -80,7 +84,8 @@
       "laps": 54,
       "wearScale": 0.78,
       "categories": ["HYPERCAR", "LMGT3"],
-      "dryCompounds": ["medium", "hard"]
+      "dryCompounds": ["medium", "hard"],
+      "rainBias": 0.7
     },
     {
       "id": "fuji",
@@ -96,7 +101,8 @@
       "laps": 63,
       "wearScale": 0.75,
       "categories": ["HYPERCAR", "LMGT3"],
-      "dryCompounds": ["soft", "medium"]
+      "dryCompounds": ["soft", "medium"],
+      "rainBias": 1.6
     },
     {
       "id": "barcelona",
@@ -112,7 +118,8 @@
       "laps": 62,
       "wearScale": 0.80,
       "categories": ["HYPERCAR", "LMGT3"],
-      "dryCompounds": ["medium", "hard"]
+      "dryCompounds": ["medium", "hard"],
+      "rainBias": 0.8
     },
     {
       "id": "monza",
@@ -128,7 +135,8 @@
       "laps": 62,
       "wearScale": 0.72,
       "categories": ["HYPERCAR", "LMGT3"],
-      "dryCompounds": ["soft", "medium"]
+      "dryCompounds": ["soft", "medium"],
+      "rainBias": 0.9
     }
   ]
 }

@@ -66,7 +66,9 @@ public class RaceSimulator {
         this.config = config;
         this.strategies.putAll(strategies);
         this.random = new Random(config.seed());
-        this.weatherModel = new WeatherModel(random, config.weatherEnabled());
+        // 赛道自带降雨倾向：斯帕/富士更容易下雨，COTA 更干燥
+        this.weatherModel = new WeatherModel(random, config.weatherEnabled(),
+                config.track().rainBias());
         this.weather = config.initialWeather();
         this.previousWeather = this.weather;
     }

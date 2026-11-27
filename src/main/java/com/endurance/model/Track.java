@@ -35,6 +35,9 @@ public class Track {
     /** 这一站允许用的干胎配方（官方规则：普通分站两种，勒芒三种）。 */
     private final java.util.List<String> dryCompounds;
 
+    /** 赛道的降雨倾向（1.0 为基准；斯帕 1.8，COTA 0.7）。 */
+    private final double rainBias;
+
     public Track(String id, String name, int lengthMeters, double baseLapSeconds,
                  int cornerCount, double trackTempCelsius, double fuelPerLap,
                  int defaultLaps, double tireWearScale) {
@@ -67,6 +70,17 @@ public class Track {
                  java.util.List<RaceCategory> categories,
                  int round, String country, String event,
                  java.util.List<String> dryCompounds) {
+        this(id, name, lengthMeters, baseLapSeconds, cornerCount, trackTempCelsius,
+                fuelPerLap, defaultLaps, tireWearScale, categories, round, country, event,
+                dryCompounds, 1.0);
+    }
+
+    public Track(String id, String name, int lengthMeters, double baseLapSeconds,
+                 int cornerCount, double trackTempCelsius, double fuelPerLap,
+                 int defaultLaps, double tireWearScale,
+                 java.util.List<RaceCategory> categories,
+                 int round, String country, String event,
+                 java.util.List<String> dryCompounds, double rainBias) {
         this.id = id;
         this.name = name;
         this.lengthMeters = lengthMeters;
@@ -82,6 +96,7 @@ public class Track {
         this.round = round;
         this.country = country == null ? "" : country;
         this.event = event == null || event.isBlank() ? name : event;
+        this.rainBias = rainBias <= 0 ? 1.0 : rainBias;
         this.dryCompounds = dryCompounds == null || dryCompounds.isEmpty()
                 ? java.util.List.of("soft", "medium", "hard")
                 : java.util.List.copyOf(dryCompounds);
@@ -90,6 +105,11 @@ public class Track {
     /** 这一站允许用的干胎配方 id 列表（官方规则：普通分站两种，勒芒三种）。 */
     public java.util.List<String> dryCompounds() {
         return dryCompounds;
+    }
+
+    /** 这一站的降雨倾向（1.0 = 平均值）。 */
+    public double rainBias() {
+        return rainBias;
     }
 
     /** 某个配方这一站能不能用；雨胎不受限制。 */

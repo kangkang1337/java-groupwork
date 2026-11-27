@@ -492,7 +492,7 @@ WEC 管的是**配额**不是配方：官方按分站规定每辆车能用多少
 
 `data/reference/wec-2026.json` 存了 FIA WEC 2026 赛季两场真实决赛成绩
 （[富士](https://www.fiawec.com/en/page/resultats-1?raceId=4954&sessionId=7830)、
-[巴林](https://www.fiawec.com/en/page/resultats-1?raceId=5066)），
+[蒙扎](https://www.fiawec.com/en/page/resultats-1?raceId=5171)），
 `dev/RealDataCheck` 会把我们的仿真和它们比"形状"：
 
 | 指标 | 真实 WEC 富士 | 本项目 | 说明 |
@@ -516,7 +516,7 @@ WEC 管的是**配额**不是配方：官方按分站规定每辆车能用多少
 | 文件 | 内容 |
 | --- | --- |
 | `data/tracks.json` | 赛道：长度、基准圈速、弯数、气温、油耗、默认圈数、轮胎磨损倍率 |
-| `data/teams.json` | 车队与车手：**除玩家车队外均为 FIA WEC 2026 真实参赛单位**（车号、车手来自官网），速度偏移由富士站真实最快圈换算 |
+| `data/teams.json` | 车队与车手：**除玩家车队外，选取的是部分 FIA WEC 2026 代表性参赛车队与车手**（车号、车手来自官网，并非完整赛季参赛名单），速度偏移由富士站真实最快圈换算 |
 | `data/tires.json` | 轮胎配方：干地偏移、磨损率、磨穿惩罚、最佳胎温 |
 
 改完直接 `run.bat` 就生效。比如把 `tracks.json` 里富士的 `"laps": 60` 改成 `30`，

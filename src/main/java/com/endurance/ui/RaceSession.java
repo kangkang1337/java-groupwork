@@ -54,14 +54,17 @@ public class RaceSession {
         timer.stop();
     }
 
+    /** 暂停：连 AnimationTimer 一起停，别让界面在暂停时还每帧重绘。 */
     public void pause() {
         running = false;
+        timer.stop();
     }
 
     public void resume() {
         if (!simulator.isFinished()) {
             running = true;
             lastNanos = -1;
+            timer.start();   // pause() 停了计时器，这里要重新启动
         }
     }
 

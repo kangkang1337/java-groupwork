@@ -21,10 +21,17 @@ public class WeatherModel {
 
     private final Random random;
     private final boolean enabled;
+    /** 赛道的降雨倾向：>1 更容易下雨，<1 更干燥（斯帕 vs COTA）。 */
+    private final double rainBias;
 
     public WeatherModel(Random random, boolean enabled) {
+        this(random, enabled, 1.0);
+    }
+
+    public WeatherModel(Random random, boolean enabled, double rainBias) {
         this.random = random;
         this.enabled = enabled;
+        this.rainBias = Math.max(0.1, rainBias);
     }
 
     /**
@@ -39,10 +46,11 @@ public class WeatherModel {
         double roll = random.nextDouble();
         return switch (current) {
             case DRY -> {
-                if (roll < DRY_TO_WET) {
+                // 变湿的两个方向都按赛道气候缩放，变干不受影响
+                if (roll < DRY_TO_WET * rainBias) {
                     yield Weather.WET;
                 }
-                if (roll < DRY_TO_WET + DRY_TO_DAMP) {
+                if (roll < (DRY_TO_WET + DRY_TO_DAMP) * rainBias) {
                     yield Weather.DAMP;
                 }
                 yield Weather.DRY;

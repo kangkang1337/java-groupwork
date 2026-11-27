@@ -28,10 +28,10 @@ dev 稳定后 → 组长向 main 提 PR → 合入 main（打 tag，用于最终
 统一用 `类型: 说明` 的格式，方便一眼看出改了什么：
 
 ```
-feat: 新增图层混合模式
-fix: 修复撤销后图层顺序错乱
+feat: 新增分站日历界面
+fix: 修复安全车结束后仍压缩差距
 docs: 补充开发文档中的模块说明
-refactor: 把选区逻辑抽到 SelectionManager
+refactor: 把磨损公式抽到共用的 TirePhysics
 style: 统一缩进与空行
 chore: 更新 .gitignore
 ```
@@ -44,11 +44,11 @@ chore: 更新 .gitignore
 
 ```bat
 build.bat
-run-tests.bat
+test.bat
 ```
 
-看到 `ALL TESTS PASSED` 再提交 PR。如果改动了绘图/选区/图层相关代码，
-建议再手动点一遍界面确认没坏。
+看到 `ALL CHECKS PASSED` 再提交 PR。如果改动了仿真内核或 AI 策略，
+建议再手动跑一场比赛确认排名、复盘数据都正常。
 
 ## 四、邀请组员加入仓库
 

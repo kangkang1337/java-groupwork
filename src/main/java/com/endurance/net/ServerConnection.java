@@ -26,6 +26,9 @@ public class ServerConnection {
     private volatile int seat = -1;
     private volatile String token;
 
+    /** 单条消息上限：防止客户端发一行几个 GB 把服务器内存吃光。 */
+    private static final int MAX_LINE_LENGTH = 64 * 1024;
+
     public ServerConnection(Socket socket) throws IOException {
         this.socket = socket;
         this.reader = new BufferedReader(
@@ -33,12 +36,22 @@ public class ServerConnection {
         this.writer = new PrintWriter(
                 new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), false);
         socket.setTcpNoDelay(true);
+        // 不设超时的话，一个连上就不说话的客户端会永久占住一个处理线程
+        socket.setSoTimeout(120_000);
     }
 
-    /** 读一行，连接断开返回 null。 */
+    /** 读一行，连接断开返回 null。超长行按协议错误处理，直接断开。 */
     public String readLine() {
         try {
-            return reader.readLine();
+            String line = reader.readLine();
+            if (line != null && line.length() > MAX_LINE_LENGTH) {
+                com.endurance.util.AppLog.warn("拒绝超长消息（" + line.length() + " 字符）");
+                return null;
+            }
+            return line;
+        } catch (java.net.SocketTimeoutException e) {
+            // 长时间没动静：先断开，客户端可以带 token 重连回来
+            return null;
         } catch (IOException e) {
             return null;
         }

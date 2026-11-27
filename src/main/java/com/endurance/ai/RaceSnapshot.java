@@ -19,6 +19,8 @@ public record RaceSnapshot(
         int lap,
         int totalLaps,
         Weather weather,
+        /** 这场比赛的天气是否会变；推演必须跟着它走，不能一律开着。 */
+        boolean weatherEnabled,
         Track track,
         double tireWearScale,
         double pitLaneLoss,
@@ -27,6 +29,12 @@ public record RaceSnapshot(
         double fuelTimePerKg,
         Map<String, TireCompound> tires,
         List<CarSnapshot> cars) {
+
+    /** 快照真的不可变：record 只是字段不可重新赋值，集合本身还是要 copy 一下。 */
+    public RaceSnapshot {
+        tires = java.util.Map.copyOf(tires);
+        cars = java.util.List.copyOf(cars);
+    }
 
     /** 一辆车在某一刻的状态。 */
     public record CarSnapshot(

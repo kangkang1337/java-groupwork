@@ -5,6 +5,7 @@ cd /d "%~dp0"
 rem =====================================================================
 rem  Endurance Strategy build script
 rem  If your JDK 17 lives elsewhere, change the JDK path below.
+rem  Only entry points need to be listed: -sourcepath resolves the rest.
 rem =====================================================================
 set "JDK=C:\Program Files\Microsoft\jdk-17.0.15.6-hotspot"
 if defined JAVA_HOME if exist "%JAVA_HOME%\bin\javac.exe" set "JDK=%JAVA_HOME%"
@@ -42,15 +43,7 @@ echo [2/3] Compiling Java sources...
     "src\main\java\com\endurance\dev\TrackCheck.java" ^
     "src\main\java\com\endurance\dev\ReviewSnapshot.java" ^
     "src\main\java\com\endurance\dev\ServerMain.java" ^
-    "src\main\java\com\endurance\dev\ClientMain.java" ^
-    "src\main\java\com\endurance\dev\NetCheck.java" ^
-    "src\main\java\com\endurance\dev\LogSnapshot.java" ^
-    "src\main\java\com\endurance\dev\RealDataCheck.java" ^
-    "src\main\java\com\endurance\dev\SettingsSnapshot.java" ^
-    "src\main\java\com\endurance\dev\CalendarSnapshot.java" ^
-    "src\main\java\com\endurance\dev\RateCheck.java" ^
-    "src\main\java\com\endurance\dev\FetchTracks.java" ^
-    "src\main\java\com\endurance\dev\TrackCheck.java"
+    "src\main\java\com\endurance\dev\ClientMain.java"
 if errorlevel 1 (
     echo.
     echo [ERROR] Compilation failed.

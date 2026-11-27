@@ -385,6 +385,10 @@ public class MainWindow {
         if (session != null) {
             session.stop();
         }
+        // 旧比赛的 AI 线程池必须关掉，否则每切一次赛道就漏一个池子
+        if (lineup != null) {
+            lineup.close();
+        }
         this.lineup = RaceSetup.build(data, track, track.defaultLaps(), seed);
         this.simulator = new RaceSimulator(lineup.config(), lineup.strategies());
         this.session = new RaceSession(simulator);

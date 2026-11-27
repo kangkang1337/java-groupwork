@@ -99,7 +99,8 @@ public class RaceRoom {
             return;
         }
 
-        String newToken = UUID.randomUUID().toString().substring(0, 8);
+        // 128 位随机 token：8 位十六进制只有 40 亿种可能，可被暴力猜中别人的座位
+        String newToken = UUID.randomUUID().toString().replace("-", "");
         connection.setSeat(seat);
         connection.setToken(newToken);
         seats.put(seat, connection);
@@ -113,6 +114,11 @@ public class RaceRoom {
     }
 
     private void reconnect(ServerConnection connection, int seat, String token) {
+        // 重连成功后换发新 token：旧 token 即使泄露也再用不了了
+        tokens.remove(token);
+        String rotated = UUID.randomUUID().toString().replace("-", "");
+        token = rotated;
+        tokens.put(rotated, seat);
         ServerConnection old = seats.get(seat);
         if (old != null && old != connection) {
             old.send(Protocol.error("你的座位已在别处重新连接"));

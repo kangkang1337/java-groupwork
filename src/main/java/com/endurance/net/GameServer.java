@@ -47,7 +47,16 @@ public class GameServer implements Closeable {
     private final Map<ServerConnection, RaceRoom> roomOf = new ConcurrentHashMap<>();
     private volatile boolean running = true;
 
+    /** 只监听回环地址：这是课程项目的双人原型，不该被当成公网服务。 */
     public GameServer(int port, int laps, int minPlayers, long lapMillis) throws IOException {
+        this(port, laps, minPlayers, lapMillis, false);
+    }
+
+    /**
+     * @param bindAll true 才监听所有网卡（仅在你确认局域网可信时使用）
+     */
+    public GameServer(int port, int laps, int minPlayers, long lapMillis,
+                      boolean bindAll) throws IOException {
         this.data = DataLoader.loadDefault();
         this.laps = laps;
         this.minPlayers = minPlayers;
@@ -55,7 +64,10 @@ public class GameServer implements Closeable {
         this.serverSocket = new ServerSocket();
         // 端口 0 表示让系统分配，单元测试和临时开局都用得上
         this.serverSocket.setReuseAddress(true);
-        this.serverSocket.bind(new InetSocketAddress(port));
+        // 默认只绑 127.0.0.1：没有认证、没有加密的原型不该直接暴露在公网上
+        java.net.InetAddress address = bindAll
+                ? null : java.net.InetAddress.getLoopbackAddress();
+        this.serverSocket.bind(new InetSocketAddress(address, port));
     }
 
     public int port() {

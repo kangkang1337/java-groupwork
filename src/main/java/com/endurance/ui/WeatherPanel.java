@@ -56,6 +56,13 @@ public class WeatherPanel extends VBox {
         HBox row2 = metric("湿度", humidity, "降雨", rain);
 
         forecastBar.setAlignment(Pos.CENTER_LEFT);
+        // 五个格子一次建好，之后只改颜色——比赛界面按帧刷新，
+        // 每帧都清空重建节点纯属浪费
+        for (int i = 0; i < 5; i++) {
+            Region cell = new Region();
+            cell.getStyleClass().add("forecast-cell");
+            forecastBar.getChildren().add(cell);
+        }
         Label forecastLabel = new Label("未来 5 圈");
         forecastLabel.getStyleClass().add("weather-caption");
         HBox forecast = new HBox(8, forecastLabel, forecastBar);
@@ -85,13 +92,10 @@ public class WeatherPanel extends VBox {
         rain.setText(String.format(Locale.ROOT, "%.0f%%", chance * 100));
         rain.setStyle("-fx-text-fill: " + (chance > 0.35 ? "#9ad1ff" : "#cfd6df") + ";");
 
-        forecastBar.getChildren().clear();
         for (int lap = 1; lap <= 5; lap++) {
-            Region cell = new Region();
-            cell.getStyleClass().add("forecast-cell");
             double single = 1 - Math.pow(1 - Math.max(0, Math.min(1, chance)), 1.0 / lap);
-            cell.setStyle("-fx-background-color: " + rainColor(single) + ";");
-            forecastBar.getChildren().add(cell);
+            forecastBar.getChildren().get(lap - 1)
+                    .setStyle("-fx-background-color: " + rainColor(single) + ";");
         }
 
         WeatherProfile.Profile profile = profiles.get(simulator.config().track().id());

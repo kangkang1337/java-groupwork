@@ -34,7 +34,19 @@ public class AiStrategy implements Strategy {
 
     /** 刚进过站后的冷却圈数，避免"进站完下一圈又进站"这种蠢事。 */
     private int cooldown;
-    private volatile PitDecision nextDecision;
+    /** 过期被丢弃的规划数（自检用）。 */
+    private int stalePlans;
+    /**
+     * 后台算完的决策，带来源圈号。
+     *
+     * <p>异步推演可能晚好几圈才回来。不带圈号的话，第 20 圈算出的结论
+     * 会在第 23 圈才被执行——那时赛道状况早就变了。</p>
+     */
+    private volatile PendingPlan nextDecision;
+
+    /** 一条待执行的规划：来自哪一圈、结论是什么。 */
+    private record PendingPlan(int sourceLap, PitDecision decision) {
+    }
     private volatile boolean planning;
     private int planCount;
 
@@ -72,11 +84,14 @@ public class AiStrategy implements Strategy {
                 } else if (!planning) {
                     planCount++;
                     planning = true;
+                    // 规划一启动就设冷却：无论结果是进站还是不进站，
+                    // 都算"已经想过一次"，不该每圈重复推演
+                    cooldown = 3;
                     planner.planAsync(snapshot, carNumber, personality)
                             .whenComplete((result, error) -> {
                                 planning = false;
                                 if (error == null) {
-                                    nextDecision = result;
+                                    nextDecision = new PendingPlan(snapshot.lap(), result);
                                 }
                             });
                 }
@@ -84,8 +99,16 @@ public class AiStrategy implements Strategy {
         }
 
         if (!synchronous) {
-            decision = nextDecision;
+            PendingPlan pending = nextDecision;
             nextDecision = null;
+            if (pending != null) {
+                // 超过一圈就算过期：宁可不进站，也不要拿旧判断坑自己
+                if (context.lap() - pending.sourceLap() <= 1) {
+                    decision = pending.decision();
+                } else {
+                    stalePlans++;
+                }
+            }
         }
 
         // 兜底：推演没跟上而油快没了，先自己进站
@@ -97,6 +120,11 @@ public class AiStrategy implements Strategy {
             cooldown = 3;
         }
         return decision;
+    }
+
+    /** 被判定过期而丢弃的规划次数（自检用）。 */
+    public int stalePlans() {
+        return stalePlans;
     }
 
     @Override
@@ -143,7 +171,8 @@ public class AiStrategy implements Strategy {
             return null;
         }
         return new RaceSnapshot(context.lap(), context.totalLaps(), context.weather(),
-                context.track(), config.tireWearScale(), config.pitLaneLoss(),
+                config.weatherEnabled(), context.track(),
+                config.tireWearScale(), config.pitLaneLoss(),
                 config.tireChangeCost(), config.refuelSecondsPerKg(), config.fuelTimePerKg(),
                 tires, cars);
     }

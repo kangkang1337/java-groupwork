@@ -101,7 +101,8 @@ public final class DataLoader {
                     item.opt("round", new Json.JsonValue.Num(0)).asInt(),
                     item.opt("country", new Json.JsonValue.Str("")).asString(),
                     item.opt("event", new Json.JsonValue.Str(item.get("name").asString())).asString(),
-                    parseDryCompounds(item.opt("dryCompounds", null))));
+                    parseDryCompounds(item.opt("dryCompounds", null)),
+                    item.opt("rainBias", new Json.JsonValue.Num(1.0)).asDouble()));
         }
         return tracks;
     }
