@@ -6,7 +6,7 @@
 所有仿真、AI、界面、联机协议都是本项目自己写的代码，除 JavaFX 外不依赖任何第三方库。
 
 > **当前状态：功能完整，可直接交付。**
-> `test.bat` 一键跑 **165 项自测**，`package.bat` 一键打可分发包。
+> `test.bat` 一键跑 **172 项自测**，`package.bat` 一键打可分发包。
 > 完整规则见 [RULES.md](RULES.md)。
 
 ![比赛界面：双组同场 + 旗语 + 天气 + 赛会通告](screenshots/race-fuji.png)
@@ -52,7 +52,7 @@
 ```bat
 build.bat                        :: 编译
 run.bat                          :: 打开图形界面，自动开赛（推荐）
-test.bat                         :: 一键跑完全部自测（165 项断言）
+test.bat                         :: 一键跑完全部自测（172 项断言）
 package.bat                      :: 打包成可分发的文件夹 + zip
 
 race-cli.bat list                :: 命令行版：列出赛道 / 车队 / 轮胎
@@ -567,7 +567,7 @@ JSON 解析器是 `data/Json.java` 里自己写的（不依赖任何第三方库
 大作业-test/
 ├─ build.bat     编译（javac 直接编译，只列入入口类）
 ├─ run.bat       开图形界面
-├─ test.bat      一键跑全部自测（165 项）
+├─ test.bat      一键跑全部自测（172 项）
 ├─ package.bat   打包成分发目录 + zip
 ├─ race-cli.bat  命令行版
 ├─ server.bat    联机服务器
@@ -622,7 +622,7 @@ JSON 解析器是 `data/Json.java` 里自己写的（不依赖任何第三方库
 | 配置数据 | `data/*.json`（赛道 / 车队 / 轮胎 / 天气，改数值不用重编译） |
 | 真实赛道图 | `data/tracks/*.svg`（8 条官方矢量图，来自 Wikimedia Commons） |
 | 运行库 | `lib/`（JavaFX 21 的 3 个 jar） |
-| 一键自测 | `test.bat`（165 项断言） |
+| 一键自测 | `test.bat`（172 项断言） |
 | 联机原型 | `server.bat` / `client.bat`，代码在 `src/main/java/com/endurance/net/` |
 | 分发包 | `package.bat` → `dist/endurance-strategy-v1.0.zip` |
 | 截图 | `screenshots/` |

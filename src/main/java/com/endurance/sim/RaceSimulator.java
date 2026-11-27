@@ -42,6 +42,17 @@ public class RaceSimulator {
     private int completedLaps;
     /** 安全车剩余圈数，0 表示没有安全车。 */
     private int safetyCarRemaining;
+
+    /**
+     * 本圈是否处于安全车状态。
+     *
+     * <p>安全车时长必须按「整圈」计：本圈开始定好，圈速 / 磨损 / 进站折扣 / 差距压缩
+     * 全部用它，圈末才递减剩余圈数。原来先减再判，会多压缩一圈、少播一层通知。</p>
+     */
+    private boolean safetyCarThisLap;
+
+    /** 本圈开始时生效的旗语（圈末事故不影响本圈判定）。 */
+    private com.endurance.model.RaceFlag lapFlag = com.endurance.model.RaceFlag.GREEN;
     /** 当前赛道旗语。 */
     private com.endurance.model.RaceFlag flag = com.endurance.model.RaceFlag.GREEN;
     /** 非绿旗还要持续几圈。 */
@@ -76,7 +87,7 @@ public class RaceSimulator {
         int lap = completedLaps + 1;
         Track track = config.track();
 
-        // 红旗期间比赛暂停：只消耗圈数，车辆原地不动
+        // 红旗期间比赛暂停：赛车停在赛道上，不推进圈数、不产生逐圈数据
         if (redFlagLaps > 0) {
             redFlagLaps--;
             flag = redFlagLaps > 0 ? com.endurance.model.RaceFlag.RED
@@ -84,16 +95,18 @@ public class RaceSimulator {
             if (redFlagLaps == 0) {
                 events.add(new RaceEvent(lap, RaceEvent.Type.FLAG, "红旗解除，比赛重启"));
             }
-            completedLaps = lap;
-            if (completedLaps >= config.totalLaps()) {
-                finishRace();
-            }
+            // 注意：这里不能写 completedLaps = lap —— 车一圈都没跑，
+            // 否则比赛会在实际圈数不足 totalLaps 时提前结束
             return true;
         }
 
         // 0) 安全车状态 → 再定旗语（顺序不能反，否则安全车那一圈还显示绿旗）
         updateSafetyCar(lap);
         updateFlag(lap);
+
+        // 本圈生效的旗语就此固定：圈末发生的事故属于下一圈，
+        // 不能反过来追溯处罚本圈已经完成的超车
+        lapFlag = flag;
 
         // 1) 天气
         Weather next = weatherModel.next(weather);
@@ -125,7 +138,7 @@ public class RaceSimulator {
             }
             double time = computeLapTime(car, context);
             car.advanceLap(time, track.trackTempCelsius(), weather, track.fuelPerLap(),
-                    config.tireWearScale() * (isSafetyCarActive() ? 0.15 : 1.0));
+                    config.tireWearScale() * (safetyCarThisLap ? 0.15 : 1.0));
             lapTimes.put(car, time);
         }
 
@@ -150,8 +163,11 @@ public class RaceSimulator {
             }
             lapResults.add(new LapResult(lap, car.number(), time, i + 1,
                     car.compound(), car.tireWear(), car.tireTemp(), car.fuelKg(), weather,
-                    car.stint(), isSafetyCarActive()));
+                    car.stint(), safetyCarThisLap));
         }
+
+        // 圈末结算安全车剩余圈数：本圈已经完整跑完，才算消耗掉一圈安全车
+        endSafetyCarLap(lap);
 
         completedLaps = lap;
         if (completedLaps >= config.totalLaps()) {
@@ -189,7 +205,7 @@ public class RaceSimulator {
             flagLaps--;
             return;
         }
-        if (isSafetyCarActive()) {
+        if (safetyCarThisLap) {
             flag = com.endurance.model.RaceFlag.FCY;
             return;
         }
@@ -234,22 +250,41 @@ public class RaceSimulator {
     }
 
     /** 安全车：随机出动，维持若干圈后收起。 */
+    /**
+     * 圈开始时确定本圈的安全车状态，并做差距压缩。
+     *
+     * <p>顺序很关键：先判定、再压缩，剩余圈数留到 {@link #endSafetyCarLap} 才递减。
+     * 原来先递减再判，会让安全车结束后的那一圈仍然压缩差距、并且减速少一圈。</p>
+     */
     private void updateSafetyCar(int lap) {
+        safetyCarThisLap = false;
         if (!config.safetyCarEnabled()) {
             return;
         }
+        // 本圈是否延续上一圈的安全车
         if (safetyCarRemaining > 0) {
-            safetyCarRemaining--;
-            compressFieldUnderSafetyCar();
-            if (safetyCarRemaining == 0) {
-                events.add(new RaceEvent(lap, RaceEvent.Type.SAFETY_CAR, "安全车回站，比赛恢复"));
-            }
-            return;
-        }
-        if (lap < config.totalLaps() - 2 && random.nextDouble() < config.safetyCarChance()) {
+            safetyCarThisLap = true;
+        } else if (lap < config.totalLaps() - 2
+                && random.nextDouble() < config.safetyCarChance()) {
+            // 本圈新触发：从这一圈就开始减速
             safetyCarRemaining = config.safetyCarLaps();
+            safetyCarThisLap = true;
             events.add(new RaceEvent(lap, RaceEvent.Type.SAFETY_CAR,
                     "安全车出动！全场减速，进站代价降低"));
+        }
+        if (safetyCarThisLap) {
+            compressFieldUnderSafetyCar();
+        }
+    }
+
+    /** 圈末结算：安全车跑完一圈才扣剩余圈数。 */
+    private void endSafetyCarLap(int lap) {
+        if (!safetyCarThisLap || safetyCarRemaining <= 0) {
+            return;
+        }
+        safetyCarRemaining--;
+        if (safetyCarRemaining == 0) {
+            events.add(new RaceEvent(lap, RaceEvent.Type.SAFETY_CAR, "安全车回站，比赛恢复"));
         }
     }
 
@@ -265,25 +300,36 @@ public class RaceSimulator {
             if (decision == null) {
                 continue;
             }
-            double lost = config.pitStopCost(decision.fuelToAdd(), decision.changesTires());
-            if (isSafetyCarActive()) {
+            // 油箱装不下的部分不该计费：按"实际加进去的油"算进站耗时
+            double space = Math.max(0, Car.MAX_FUEL_KG - car.fuelKg());
+            double acceptedFuel = Math.min(decision.fuelToAdd(), space);
+            double lost = config.pitStopCost(acceptedFuel, decision.changesTires());
+            if (safetyCarThisLap) {
                 // 安全车期间全场都慢，进站相对"便宜"
                 lost *= 0.35;
             }
-            car.applyPitStop(lost, decision.compound(), decision.fuelToAdd());
+            car.applyPitStop(lost, decision.compound(), acceptedFuel);
             pittedThisLap.add(car);
             pitRecords.add(new PitRecord(context.lap(), car.number(),
                     decision.changesTires() ? decision.compound().id() : car.compound().id(),
-                    decision.fuelToAdd(), lost, decision.changesTires()));
+                    acceptedFuel, lost, decision.changesTires()));
+            String fuelNote = acceptedFuel + 0.5 < decision.fuelToAdd()
+                    ? String.format("（油箱只装得下 %.0fkg）", acceptedFuel) : "";
             events.add(new RaceEvent(context.lap(), RaceEvent.Type.PIT_STOP,
-                    String.format("%s 进站：%s，耗时 %.1fs",
-                            car.displayName(), decision.describe(), lost)));
+                    String.format("%s 进站：%s%s，耗时 %.1fs",
+                            car.displayName(), decision.describe(), fuelNote, lost)));
         }
     }
 
     private void rollMechanicalFailures(int lap, Map<Car, Double> lapTimes) {
         List<Car> failed = new ArrayList<>();
-        for (Car car : lapTimes.keySet()) {
+        // 必须按 config.cars() 的固定顺序遍历：
+        // lapTimes 是 HashMap，而 Car 没重写 hashCode，遍历顺序依赖对象身份，
+        // 同一 seed 的两场比赛可能把随机数分配给不同车，退赛名单就对不上了
+        for (Car car : config.cars()) {
+            if (!lapTimes.containsKey(car)) {
+                continue;
+            }
             double chance = (1 - car.team().reliability()) * 0.01;
             if (random.nextDouble() < chance) {
                 failed.add(car);
@@ -304,7 +350,7 @@ public class RaceSimulator {
      */
     private double computeLapTime(Car car, RaceContext context) {
         Track track = config.track();
-        if (isSafetyCarActive()) {
+        if (safetyCarThisLap) {
             // 安全车带队：全场同速，磨损也几乎为零
             return track.baseLapSeconds() * 1.55 + random.nextGaussian() * 0.4;
         }
@@ -434,6 +480,17 @@ public class RaceSimulator {
         return safetyCarRemaining;
     }
 
+    /** 本圈是不是安全车圈（自检用）。 */
+    public boolean safetyCarThisLap() {
+        return safetyCarThisLap;
+    }
+
+    /** 强制进入红旗暂停（自检用）。 */
+    public void forceRedFlag(int laps) {
+        this.redFlagLaps = Math.max(1, laps);
+        this.flag = com.endurance.model.RaceFlag.RED;
+    }
+
     /** 强制出动安全车（自检用）。 */
     public void forceSafetyCar(int laps) {
         this.safetyCarRemaining = laps;
@@ -534,7 +591,7 @@ public class RaceSimulator {
                                      java.util.Set<Car> pittedThisLap) {
         // 只在局部黄旗下判定：FCY / 安全车期间全场同速，
         // 名次互换是圈速噪声造成的，不是超车，判罚会误伤一大片
-        if (flag != com.endurance.model.RaceFlag.YELLOW) {
+        if (lapFlag != com.endurance.model.RaceFlag.YELLOW) {
             return;
         }
         List<Car> order = sortedCars();

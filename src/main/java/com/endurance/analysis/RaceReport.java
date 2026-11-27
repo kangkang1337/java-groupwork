@@ -97,7 +97,8 @@ public final class RaceReport {
 
         double startFuel = RaceSetup.startFuelFor(track);
         PitOptimizer.Plan optimal = PitOptimizer.optimal(track, weather, tires,
-                car.compound(), startFuel, car.team().paceOffset(), car.aggression(),
+                // 必须用起步轮胎：此时 car.compound() 已经是比赛中最后一次换上的胎
+        car.initialCompound(), startFuel, car.team().paceOffset(), car.aggression(),
                 config.pitLaneLoss() + config.tireChangeCost(), track.fuelPerLap(),
                 config.fuelTimePerKg(), config.tireWearScale(), config.refuelSecondsPerKg(),
                 safetyCar);

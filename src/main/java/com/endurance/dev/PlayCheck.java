@@ -68,6 +68,10 @@ public final class PlayCheck {
         testReviewWording(data);
         testTireRestrictions(data);
         testFuelOnlyPitStop(data);
+        testStartTireLegality(data);
+        testSafetyCarTiming(data);
+        testRedFlagPause(data);
+        testSeedDeterminism(data);
     }
 
     /** 玩家排队一条进站指令，下一圈应该真的进站。 */
@@ -135,7 +139,110 @@ public final class PlayCheck {
         check(String.format("安全车期间几乎不磨胎（%.3f）", wear), wear < 0.01);
     }
 
-/** 只加油不换胎：省时间、但磨损继续累积（不换胎 ≠ 换同一套新胎）。 */
+    /** P0-1：所有分站、所有车手，起步轮胎都必须合法。 */
+    private static void testStartTireLegality(GameData data) {
+        int checkedCars = 0;
+        java.util.List<String> offenders = new java.util.ArrayList<>();
+        for (var track : data.tracks()) {
+            var config = com.endurance.setup.RaceSetup.buildRace(data, track, 10, 1L);
+            for (var car : config.cars()) {
+                checkedCars++;
+                if (!track.allowsCompound(car.compound().id())) {
+                    offenders.add(track.id() + "/#" + car.number()
+                            + "=" + car.compound().id());
+                }
+            }
+        }
+        check("全部 " + checkedCars + " 个车手起步轮胎合法"
+                        + (offenders.isEmpty() ? "" : "（违规：" + offenders + "）"),
+                offenders.isEmpty());
+    }
+
+    /** P0-5：强制 3 圈安全车，必须恰好 3 圈，且第 4 圈不再处于安全车。 */
+    private static void testSafetyCarTiming(GameData data) {
+        var lineup = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), 20, 909L, true, false);
+        var simulator = new com.endurance.sim.RaceSimulator(lineup.config(), lineup.strategies());
+        for (int i = 0; i < 6; i++) {
+            simulator.step();
+        }
+        simulator.forceSafetyCar(3);
+
+        int safetyLaps = 0;
+        for (int i = 0; i < 3; i++) {
+            simulator.step();
+            if (simulator.safetyCarThisLap()) {
+                safetyLaps++;
+            }
+        }
+        simulator.step();
+        boolean stopped = !simulator.safetyCarThisLap();
+        lineup.close();
+
+        check("强制 3 圈安全车正好跑满 3 圈（实际 " + safetyLaps + " 圈）", safetyLaps == 3);
+        check("安全车结束后的下一圈不再处于安全车", stopped);
+    }
+
+    /** P0-7：红旗期间赛车不前进，完成圈数不能增加。 */
+    private static void testRedFlagPause(GameData data) {
+        var lineup = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), 20, 4242L, false, false);
+        var simulator = new com.endurance.sim.RaceSimulator(lineup.config(), lineup.strategies());
+        for (int i = 0; i < 5; i++) {
+            simulator.step();
+        }
+        int lapsBefore = simulator.completedLaps();
+        var car = simulator.cars().get(0);
+        double timeBefore = car.totalTime();
+        double fuelBefore = car.fuelKg();
+        double wearBefore = car.tireWear();
+
+        simulator.forceRedFlag(2);
+        for (int i = 0; i < 2; i++) {
+            simulator.step();
+        }
+        int lapsAfter = simulator.completedLaps();
+        lineup.close();
+
+        check("红旗期间完成圈数不变（" + lapsBefore + " → " + lapsAfter + "）",
+                lapsAfter == lapsBefore);
+        check("红旗期间赛车时间不变",
+                Math.abs(car.totalTime() - timeBefore) < 1e-6);
+        check("红旗期间油量和磨损不变",
+                Math.abs(car.fuelKg() - fuelBefore) < 1e-6
+                        && Math.abs(car.tireWear() - wearBefore) < 1e-6);
+    }
+
+    /** P0-8：相同 seed 的两场比赛，结果必须完全一致。 */
+    private static void testSeedDeterminism(GameData data) {
+        java.util.List<Double> first = runSeedTrace(data, 77L);
+        java.util.List<Double> second = runSeedTrace(data, 77L);
+        boolean same = first.size() == second.size();
+        if (same) {
+            for (int i = 0; i < first.size(); i++) {
+                if (Math.abs(first.get(i) - second.get(i)) > 1e-9) {
+                    same = false;
+                    break;
+                }
+            }
+        }
+        check("相同 seed 两场比赛结果逐车一致（" + first.size() + " 台车）", same);
+    }
+
+    private static java.util.List<Double> runSeedTrace(GameData data, long seed) {
+        var lineup = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), 15, seed, false, false);
+        var simulator = new com.endurance.sim.RaceSimulator(lineup.config(), lineup.strategies());
+        var result = simulator.run();
+        lineup.close();
+        java.util.List<Double> trace = new java.util.ArrayList<>();
+        for (var entry : result.standings()) {
+            trace.add(entry.totalTime());
+        }
+        return trace;
+    }
+
+    /** 只加油不换胎：省时间、但磨损继续累积（不换胎 ≠ 换同一套新胎）。 */
     private static void testFuelOnlyPitStop(GameData data) {
         var lineup = com.endurance.setup.RaceSetup.build(
                 data, data.defaultTrack(), 20, 606L, false, false);

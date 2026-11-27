@@ -111,6 +111,8 @@ public final class PitOptimizer {
         TireCompound tire = startTire;
         double totalPit = 0;
         int stint = 0;
+        // 磨损公式用的是"这套胎已经跑了几圈"，不是第几套胎
+        int stintLaps = 0;
         int nextPitIndex = 0;
 
         for (int lap = 1; lap <= laps; lap++) {
@@ -135,9 +137,11 @@ public final class PitOptimizer {
                 wear = 0;
                 temp = 55;
                 stint++;
+                stintLaps = 0;   // 换新胎
                 nextPitIndex++;
             }
 
+            stintLaps++;   // 先累加，再算本圈磨损（与 Car.advanceLap 一致）
             Weather current = weather.get(Math.min(lap - 1, weather.size() - 1));
             if (safetyCar) {
                 // 安全车期间全场同速，这一圈与进站策略无关
@@ -160,7 +164,7 @@ public final class PitOptimizer {
             double aggressionFactor = 1 + (aggression - 0.90) * 1.6;
             double overheat = 1 + Math.max(0, (temp - tire.optimalTemp()) / 30.0);
             wear = Math.min(1.25, wear + tire.wearPerLap() * aggressionFactor * overheat
-                    * current.wearMultiplier() * wearScale * (1 + stint * 0.004));
+                    * current.wearMultiplier() * wearScale * (1 + stintLaps * 0.004));
             fuel = Math.max(0, fuel - fuelPerLap * (1 + (aggression - 0.90) * 0.6));
         }
         return new Plan(pitLaps, compounds, total, totalPit);

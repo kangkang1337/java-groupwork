@@ -51,12 +51,42 @@ public final class JsonWriter {
         return sb.toString();
     }
 
-    /** 数字：整数值去掉多余的 .0。 */
+    /**
+     * 数字：整数值去掉多余的 .0；非整数用能精确往返的最短表示。
+     *
+     * <p>原来固定保留 4 位小数，写进存档再读回来会损失精度——
+     * 存档要的是"写什么读回什么"，不是给人看的对齐格式。</p>
+     */
     public static String number(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            throw new IllegalArgumentException("JSON 不支持 NaN / Infinity");
+        }
         if (value == Math.rint(value) && Math.abs(value) < 1e15) {
             return String.valueOf((long) value);
         }
-        return String.format(java.util.Locale.ROOT, "%.4f", value);
+        // Double.toString 保证能精确读回同一个 double
+        return Double.toString(value);
+    }
+
+    /**
+     * 原子写文件：先写同名 .tmp，再整体替换。
+     *
+     * <p>直接往目标文件写，一旦写到一半被强制结束，存档就是半个 JSON。
+     * 先写临时文件再 move，要么是旧内容、要么是新内容，不会出现中间态。</p>
+     */
+    public static void writeAtomically(java.nio.file.Path target, String content)
+            throws java.io.IOException {
+        java.nio.file.Path tmp = target.resolveSibling(target.getFileName() + ".tmp");
+        java.nio.file.Files.writeString(tmp, content, java.nio.charset.StandardCharsets.UTF_8);
+        try {
+            java.nio.file.Files.move(tmp, target,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+            // 某些文件系统不支持原子替换，退化成普通覆盖
+            java.nio.file.Files.move(tmp, target,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     static String render(Object value) {

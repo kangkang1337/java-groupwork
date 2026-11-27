@@ -133,6 +133,7 @@ public class AiStrategy implements Strategy {
                     car.fuelKg(),
                     false,
                     car.stint(),
+                    car.stintLaps(),
                     car.aggression(),
                     car.team().paceOffset(),
                     AiPersonality.parse(car.team().personality()),

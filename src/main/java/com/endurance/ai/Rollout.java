@@ -51,6 +51,8 @@ public final class Rollout {
         double[] fuel = new double[count];
         TireCompound[] tire = new TireCompound[count];
         int[] stint = new int[count];
+        // 这套胎已经跑了多少圈——磨损公式用的是它，不是段号
+        int[] stintLaps = new int[count];
         boolean[] retired = new boolean[count];
         int[] number = new int[count];
         double[] pace = new double[count];
@@ -67,6 +69,7 @@ public final class Rollout {
             fuel[i] = car.fuelKg();
             tire[i] = car.tire(catalog);
             stint[i] = car.stint();
+            stintLaps[i] = car.stintLaps();
             retired[i] = car.retired();
             pace[i] = car.paceOffset();
             aggression[i] = car.aggression();
@@ -86,6 +89,7 @@ public final class Rollout {
                 wear[myIndex] = 0;
                 temp[myIndex] = 55;
                 stint[myIndex]++;
+                stintLaps[myIndex] = 0;   // 换新胎，段内圈数从 0 开始
             }
             fuel[myIndex] = Math.min(130, fuel[myIndex] + candidate.fuelToAdd());
         }
@@ -125,11 +129,14 @@ public final class Rollout {
                         temp[i] = 55;
                         fuel[i] = Math.min(130, fuel[i] + addFuel);
                         stint[i]++;
+                        stintLaps[i] = 0;   // 换新胎：段内圈数归零
                     }
                 }
 
+                // 与 Car.advanceLap 完全一致的顺序：先累加段内圈数，再算磨损
+                stintLaps[i]++;
                 updateTire(snapshot, i, tire[i], wear, temp, aggression, weather, trackTemp,
-                        stint);
+                        stintLaps);
                 fuel[i] = Math.max(0, fuel[i] - fuelPerLap * (1 + (aggression[i] - 0.90) * 0.6));
             }
         }
@@ -168,7 +175,7 @@ public final class Rollout {
 
     private static void updateTire(RaceSnapshot snapshot, int index, TireCompound tire,
                                    double[] wear, double[] temp, double[] aggression,
-                                   Weather weather, double trackTemp, int[] stint) {
+                                   Weather weather, double trackTemp, int[] stintLaps) {
         double target = trackTemp + 45 + aggression[index] * 20;
         temp[index] += (target - temp[index]) * 0.42;
         temp[index] += wear[index] * 4;
@@ -177,7 +184,7 @@ public final class Rollout {
         double overheat = 1 + Math.max(0, (temp[index] - tire.optimalTemp()) / 30.0);
         double delta = tire.wearPerLap() * aggressionFactor * overheat
                 * weather.wearMultiplier() * snapshot.tireWearScale()
-                * (1 + stint[index] * 0.004);
+                * (1 + stintLaps[index] * 0.004);
         wear[index] = Math.min(1.25, wear[index] + delta);
     }
 

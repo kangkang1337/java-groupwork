@@ -38,6 +38,7 @@ public record RaceSnapshot(
             double fuelKg,
             boolean retired,
             int stint,
+            int stintLaps,
             double aggression,
             double paceOffset,
             AiPersonality personality,

@@ -99,12 +99,58 @@ public final class RaceSetup {
         for (Team team : data.teams()) {
             for (Driver driver : team.drivers()) {
                 Car car = new Car(driver.number(), team, driver.name(),
-                        data.tire(driver.startTireId()), startFuel);
+                        resolveStartTire(track, data.tire(driver.startTireId()), data),
+                        startFuel);
                 car.setAggression(driver.aggression());
                 builder.addCar(car);
             }
         }
         return builder.build();
+    }
+
+    /**
+     * 决定这台车的起步轮胎，保证不违反本站的轮胎限制。
+     *
+     * <p>配置里写的是车手偏好的配方，但每站只开放两种干胎（勒芒三种）。
+     * 例如 Alpine 默认用软胎起步，而伊莫拉只允许中性胎和硬胎——
+     * 直接沿用配置就会让 AI 用上本站根本没有的轮胎。</p>
+     *
+     * <p>规则：首选合法就用首选；不合法则在合法干胎里挑**性能最接近**的那个
+     * （按干地圈速偏移比较），而不是随便挑一个。</p>
+     */
+    public static TireCompound resolveStartTire(Track track, TireCompound preferred, GameData data) {
+        if (preferred != null && track.allowsCompound(preferred.id())) {
+            return preferred;
+        }
+        java.util.List<TireCompound> legalDry = new java.util.ArrayList<>();
+        for (TireCompound tire : data.tires()) {
+            if (!track.allowsCompound(tire.id())) {
+                continue;
+            }
+            // 雨胎不是干地起步的选择
+            if (tire.timeOffset(Weather.DRY) >= 8) {
+                continue;
+            }
+            legalDry.add(tire);
+        }
+        if (legalDry.isEmpty()) {
+            throw new IllegalStateException(
+                    "本站没有任何可用的干胎：" + track.id() + " / " + track.dryCompounds());
+        }
+        if (preferred == null) {
+            return legalDry.get(0);
+        }
+        double target = preferred.timeOffset(Weather.DRY);
+        TireCompound best = legalDry.get(0);
+        double bestDistance = Math.abs(best.timeOffset(Weather.DRY) - target);
+        for (TireCompound tire : legalDry) {
+            double distance = Math.abs(tire.timeOffset(Weather.DRY) - target);
+            if (distance < bestDistance) {
+                best = tire;
+                bestDistance = distance;
+            }
+        }
+        return best;
     }
 
     /** 起步油量：大约够跑 65% 的里程，逼出至少一次进站。 */

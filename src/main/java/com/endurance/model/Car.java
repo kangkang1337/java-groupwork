@@ -43,14 +43,30 @@ public class Car {
 
     private final List<Double> lapTimes = new ArrayList<>();
 
+    /** 开赛时的轮胎与油量：比赛结束后复盘要用它当基准，不能用被改过的当前值。 */
+    private final TireCompound initialCompound;
+    private final double initialFuelKg;
+
     public Car(int number, Team team, String driverName, TireCompound startCompound, double startFuelKg) {
         this.number = number;
+        this.initialCompound = startCompound;
+        this.initialFuelKg = startFuelKg;
         this.team = team;
         this.driverName = driverName;
         this.compound = startCompound;
         this.fuelKg = startFuelKg;
         this.tireTemp = 40; // 冷胎起步
         this.bestLapTime = Double.MAX_VALUE;
+    }
+
+    /** 起步轮胎（比赛全程不变）。 */
+    public TireCompound initialCompound() {
+        return initialCompound;
+    }
+
+    /** 起步油量（比赛全程不变）。 */
+    public double initialFuelKg() {
+        return initialFuelKg;
     }
 
     // ------------------------------------------------------------------
