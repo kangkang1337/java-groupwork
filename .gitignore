@@ -29,6 +29,9 @@ saves/
 # 答辩与课程材料（本地准备，不进代码仓库）
 middle-pre/
 
+# 代码审查记录（本地维护）
+review/
+
 # 临时文档
 *.pptx
 *.docx
