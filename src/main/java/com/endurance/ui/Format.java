@@ -47,7 +47,7 @@ public final class Format {
         return String.format("+%.1fs", seconds);
     }
 
-    /** 车手短标签：#7 陈奕舟。 */
+    /** 车手短标签：#7 M. Conway。 */
     public static String carLabel(Car car) {
         return "#" + car.number() + " " + car.driverName();
     }

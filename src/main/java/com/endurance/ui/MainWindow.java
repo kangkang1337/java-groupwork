@@ -49,6 +49,23 @@ public class MainWindow {
 
     private final StackPane centerArea = new StackPane();
     private final VBox toastLayer = new VBox(6);
+
+    /**
+     * 开发期快照用：清掉顶部浮动通告。
+     *
+     * <p>存档/读档/事件通知会盖在赛道图上，截图时把画面糊住。
+     * 这里把层清空并把「已播报到第几条」推到最新，避免下一次 refresh 又补回来。</p>
+     */
+    public void clearToasts() {
+        toastLayer.getChildren().clear();
+        // 赛道通告是单独一层，不清掉会正好盖在赛道图中央
+        majorBanner.setVisible(false);
+        majorBanner.setManaged(false);
+        if (simulator != null) {
+            toastedEvents = simulator.events().size();
+        }
+    }
+
     private final VBox resultOverlay = new VBox(10);
     /** 左上角赛事播报（旗语下面）。 */
     private final EventFeed eventFeed = new EventFeed();

@@ -47,10 +47,16 @@ public final class SnapshotTool {
                     // 负数 = 一直推进到有重大事件（安全车 / 红旗）为止
                     for (int i = 0; i < 80 && !window.getSimulator().isSafetyCarActive()
                             && window.getSimulator().redFlagLaps() == 0; i++) {
+                        topUpPlayer(window, data);
                         window.getSession().advance(1);
                     }
                 } else {
-                    window.getSession().advance(laps);
+                    // 逐圈推进并顺手替玩家车安排进站：
+                    // 否则演示图里的玩家车会一路把油烧干退赛，画面很难看
+                    for (int i = 0; i < laps; i++) {
+                        topUpPlayer(window, data);
+                        window.getSession().advance(1);
+                    }
                 }
                 if (window.getSimulator().liveStandings().size() > 0) {
                     window.selectCar(window.getSimulator().liveStandings().get(0).number());
@@ -69,6 +75,8 @@ public final class SnapshotTool {
                 window.getRoot().resize(width, height);
                 window.getRoot().layout();
                 window.refresh();
+                // 清掉浮动通告：它们会盖在赛道图上，截图很难看
+                window.clearToasts();
 
                 WritableImage image = window.getRoot()
                         .snapshot(new SnapshotParameters(), new WritableImage(width, height));
@@ -85,6 +93,23 @@ public final class SnapshotTool {
         latch.await();
         Platform.exit();
         System.exit(failure[0] == null ? 0 : 2);
+    }
+
+    /** 演示用：玩家车油量见底前替它排一条进站指令，免得截图里总是"退赛"。 */
+    private static void topUpPlayer(MainWindow window, GameData data) {
+        var lineup = window.getLineup();
+        if (lineup == null || lineup.playerCar() == null || lineup.playerStrategy() == null) {
+            return;
+        }
+        var car = lineup.playerCar();
+        if (car.isRetired() || lineup.playerStrategy().hasPending()) {
+            return;
+        }
+        // 只剩约 12 圈的油就补满，整场比赛因此会自然出现两次进站
+        double reserve = window.getSimulator().config().track().fuelPerLap() * 12 + 5;
+        if (car.fuelKg() < reserve) {
+            lineup.playerStrategy().queue(new com.endurance.sim.PitDecision(data.hard(), 70));
+        }
     }
 
     private static void writePng(WritableImage image, File target) throws Exception {

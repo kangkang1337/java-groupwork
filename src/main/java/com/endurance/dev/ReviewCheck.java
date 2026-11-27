@@ -53,14 +53,14 @@ public final class ReviewCheck {
     /** JSON 写出后能被自己的解析器读回来。 */
     private static void testJsonWriter() {
         String json = JsonWriter.obj()
-                .put("name", "陈奕舟 \"测试\"")
+                .put("name", "示例 \"引号\"")
                 .put("value", 12.5)
                 .put("count", 7)
                 .put("flag", true)
                 .put("list", JsonWriter.arr().add(1).add(2).add("x"))
                 .toJson();
         var node = Json.parse(json);
-        check("JSON 往返：字符串", node.get("name").asString().equals("陈奕舟 \"测试\""));
+        check("JSON 往返：字符串", node.get("name").asString().equals("示例 \"引号\""));
         check("JSON 往返：小数", Math.abs(node.get("value").asDouble() - 12.5) < 1e-9);
         check("JSON 往返：整数", (int) node.get("count").asDouble() == 7);
         check("JSON 往返：布尔", node.get("flag").asBool());
