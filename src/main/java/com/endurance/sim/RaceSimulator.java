@@ -27,7 +27,8 @@ public class RaceSimulator {
 
     private final RaceConfig config;
     private final Map<Car, Strategy> strategies = new HashMap<>();
-    private final Random random;
+    /** 可序列化的随机数发生器：存档能精确恢复它的内部状态。 */
+    private final com.endurance.util.DeterministicRandom random;
     private final WeatherModel weatherModel;
     private final List<RaceEvent> events = new ArrayList<>();
     private final List<LapResult> lapResults = new ArrayList<>();
@@ -65,7 +66,7 @@ public class RaceSimulator {
     public RaceSimulator(RaceConfig config, Map<Car, Strategy> strategies) {
         this.config = config;
         this.strategies.putAll(strategies);
-        this.random = new Random(config.seed());
+        this.random = new com.endurance.util.DeterministicRandom(config.seed());
         // 赛道自带降雨倾向：斯帕/富士更容易下雨，COTA 更干燥
         this.weatherModel = new WeatherModel(random, config.weatherEnabled(),
                 config.track().rainBias());
@@ -460,6 +461,96 @@ public class RaceSimulator {
         this.result = null;
     }
 
+// ------------------------------------------------------------------
+    // 存档：完整状态导出 / 恢复
+    // ------------------------------------------------------------------
+
+    /** 随机数发生器的内部状态（存档用）。 */
+    public long randomState() {
+        return random.state();
+    }
+
+    /** 当前赛道旗语（存档用，结束后的格子旗不算）。 */
+    public com.endurance.model.RaceFlag rawFlag() {
+        return flag;
+    }
+
+    /** 旗语剩余圈数。 */
+    public int flagLaps() {
+        return flagLaps;
+    }
+
+    /** 本圈锁定的旗语（黄旗超车判定用）。 */
+    public com.endurance.model.RaceFlag lapFlagValue() {
+        return lapFlag;
+    }
+
+    public List<LapResult> lapResults() {
+        return lapResults;
+    }
+
+    /** 每辆车挂的策略（存档时用来取 AI 冷却和玩家队列）。 */
+    public Map<Car, Strategy> strategies() {
+        return strategies;
+    }
+
+    public List<PitRecord> pitRecords() {
+        return pitRecords;
+    }
+
+    /** 当前名次快照（车号 -> 名次），黄旗超车判定依赖它。 */
+    public Map<Integer, Integer> positionSnapshot() {
+        Map<Integer, Integer> map = new java.util.LinkedHashMap<>();
+        for (var entry : lastPositions.entrySet()) {
+            map.put(entry.getKey().number(), entry.getValue());
+        }
+        return map;
+    }
+
+    /**
+     * 把存档里的完整状态写回来。
+     *
+     * <p>这里必须"全都要"：少恢复任何一个累计量（事件、逐圈记录、进站记录、
+     * 旗语状态、随机数状态、名次快照），读档之后的比赛就会和没中断的那次分叉，
+     * 复盘和积分也会对不上。</p>
+     */
+    public void restoreFull(int completedLaps, Weather weather, Weather previousWeather,
+                            int safetyCarRemaining, boolean safetyCarThisLap,
+                            int redFlagLaps, com.endurance.model.RaceFlag flag, int flagLaps,
+                            com.endurance.model.RaceFlag lapFlag, long randomState,
+                            List<RaceEvent> restoredEvents, List<LapResult> restoredLaps,
+                            List<PitRecord> restoredPits,
+                            Map<Integer, Integer> positions) {
+        this.completedLaps = Math.max(0, Math.min(completedLaps, config.totalLaps()));
+        this.weather = weather;
+        this.previousWeather = previousWeather;
+        this.safetyCarRemaining = Math.max(0, safetyCarRemaining);
+        this.safetyCarThisLap = safetyCarThisLap;
+        this.redFlagLaps = Math.max(0, redFlagLaps);
+        this.flag = flag;
+        this.flagLaps = Math.max(0, flagLaps);
+        this.lapFlag = lapFlag;
+        this.random.setState(randomState);
+        this.finished = false;
+        this.result = null;
+
+        events.clear();
+        events.addAll(restoredEvents);
+        lapResults.clear();
+        lapResults.addAll(restoredLaps);
+        pitRecords.clear();
+        pitRecords.addAll(restoredPits);
+
+        lastPositions.clear();
+        if (positions != null) {
+            for (Car car : config.cars()) {
+                Integer position = positions.get(car.number());
+                if (position != null) {
+                    lastPositions.put(car, position);
+                }
+            }
+        }
+    }
     /** 已完成圈数。 */
     public int completedLaps() {
         return completedLaps;
@@ -525,10 +616,6 @@ public class RaceSimulator {
 
     public List<RaceEvent> events() {
         return events;
-    }
-
-    public List<LapResult> lapResults() {
-        return lapResults;
     }
 
     /** 比赛结束后的完整结果，未结束时为 null。 */

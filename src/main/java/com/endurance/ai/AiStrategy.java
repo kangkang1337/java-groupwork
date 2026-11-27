@@ -122,6 +122,15 @@ public class AiStrategy implements Strategy {
         return decision;
     }
 
+    /** 冷却剩余圈数（存档要带上，否则读档后 AI 会提前重新规划）。 */
+    public int cooldown() {
+        return cooldown;
+    }
+
+    public void restoreCooldown(int value) {
+        this.cooldown = Math.max(0, value);
+    }
+
     /** 被判定过期而丢弃的规划次数（自检用）。 */
     public int stalePlans() {
         return stalePlans;

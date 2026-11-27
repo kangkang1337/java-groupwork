@@ -753,7 +753,8 @@ public class MainWindow {
             return;
         }
         try {
-            RaceSave.save(simulator, RaceSave.defaultFile());
+            // 存档要把"是否还在暖胎圈"一起记下，读档后直接进比赛
+            RaceSave.save(simulator, session.isFormationLap(), RaceSave.defaultFile());
             statusLabel.setText("已存档 · 第 " + simulator.completedLaps() + " / "
                     + simulator.totalLaps() + " 圈（saves/race.json）");
         } catch (Exception e) {

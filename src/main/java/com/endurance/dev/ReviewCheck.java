@@ -140,7 +140,7 @@ public final class ReviewCheck {
         }
 
         Path file = Files.createTempFile("endurance-save", ".json");
-        RaceSave.save(original, file);
+        RaceSave.save(original, false, file);
         check("存档文件已写出", Files.size(file) > 40);
 
         // 重新装配一场同参数的比赛，再读档覆盖

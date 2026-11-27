@@ -171,11 +171,27 @@ public class Car {
         this.trackLimitStrikes++;
     }
 
-    /** 从存档恢复状态（读档用）。 */
+/** 从存档恢复状态（读档用）。 */
     public void restore(double totalTime, double lastLapTime, double bestLapTime,
                         TireCompound compound, double tireWear, double tireTemp,
                         double fuelKg, int pitStops, int stint, int stintLaps,
                         boolean retired, String retireReason) {
+        restore(totalTime, lastLapTime, bestLapTime, compound, tireWear, tireTemp,
+                fuelKg, pitStops, stint, stintLaps, retired, retireReason, 0, 0, 0);
+    }
+
+    /**
+     * 完整恢复，包含判罚与安全车记账。
+     *
+     * <p>存档要真的能"原样接着跑"，就必须把这些看起来无关的累计量也带上：
+     * 漏掉 {@code safetyCarCredit} 会让复盘的最优时间算错，
+     * 漏掉 {@code trackLimitStrikes} 会让判罚从第二次重新开始。</p>
+     */
+    public void restore(double totalTime, double lastLapTime, double bestLapTime,
+                        TireCompound compound, double tireWear, double tireTemp,
+                        double fuelKg, int pitStops, int stint, int stintLaps,
+                        boolean retired, String retireReason,
+                        int trackLimitStrikes, double penaltySeconds, double safetyCarCredit) {
         this.totalTime = totalTime;
         this.lastLapTime = lastLapTime;
         this.bestLapTime = bestLapTime;
@@ -188,6 +204,9 @@ public class Car {
         this.stintLaps = stintLaps;
         this.retired = retired;
         this.retireReason = retireReason;
+        this.trackLimitStrikes = trackLimitStrikes;
+        this.penaltySeconds = penaltySeconds;
+        this.safetyCarCredit = safetyCarCredit;
         this.lapTimes.clear();
     }
 

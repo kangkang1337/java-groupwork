@@ -6,7 +6,7 @@
 所有仿真、AI、界面、联机协议都是本项目自己写的代码，除 JavaFX 外不依赖任何第三方库。
 
 > **当前状态：功能完整，可直接交付。**
-> `test.bat` 一键跑 **172 项自测**，`package.bat` 一键打可分发包。
+> `test.bat` 一键跑 **177 项自测**，`package.bat` 一键打可分发包。
 > 完整规则见 [RULES.md](RULES.md)。
 
 ![比赛界面：双组同场 + 旗语 + 天气 + 赛会通告](screenshots/race-fuji.png)
@@ -52,7 +52,7 @@
 ```bat
 build.bat                        :: 编译
 run.bat                          :: 打开图形界面，自动开赛（推荐）
-test.bat                         :: 一键跑完全部自测（172 项断言）
+test.bat                         :: 一键跑完全部自测（177 项断言）
 package.bat                      :: 打包成可分发的文件夹 + zip
 
 race-cli.bat list                :: 命令行版：列出赛道 / 车队 / 轮胎
@@ -379,8 +379,33 @@ Heart of Racing（Aston Martin Vantage）、Team WRT（BMW M4）、TF Sport（Co
 **历史战绩**：每场结束自动追加到 `saves/history.json`（时间、赛道、名次、用时、进站数、评分），
 点「战绩」按钮查看。用自己写的 `JsonWriter` 写、`Json` 读，不依赖任何第三方库。
 
-**断点续跑**：控制条上的「存档 / 读档」。存档只写**可变状态**（第几圈、每辆车的胎况油量、天气、安全车），
-赛道和车队配置不写——重开时从 data/ 重新读。所以存档文件很小，改配置也不会让存档失效。
+**断点续跑**：控制条上的「存档 / 读档」。存档格式是 **v2**，写的是**完整比赛现场**，
+不只是"看起来重要"的字段：
+
+| 保存内容 | 为什么必须存 |
+| --- | --- |
+| 随机数发生器内部状态 | 不存的话读档后随机序列从头开始，比赛立刻分叉 |
+| 逐圈记录 `lapResults` | 复盘曲线、决策评分都要用 |
+| 进站记录 `pitRecords` | 圈损归因要用 |
+| 事件流 `events` | 事件播报会断档 |
+| 旗语 / 安全车 / 红旗状态 | 否则读档后安全车状态回到初始 |
+| 名次快照 | 黄旗超车判定依赖它 |
+| 判罚计数、罚时、安全车记账 | 漏了会让判罚从头计、评分算错 |
+| AI 冷却、玩家排队指令 | 影响读档后第一圈的行为 |
+
+能做到这一点的前提是**随机数发生器可序列化**：项目没用 `java.util.Random`
+（状态是私有的，`nextGaussian` 还带缓存），而是自己写了 `DeterministicRandom`
+（SplitMix64，状态只有一个 `long`，高斯值用无缓存 Box-Muller）。
+
+验收标准写在自测里：
+
+```
+跑 6 圈 → 存档 → 读档 → 跑完   vs   一口气跑完
+逐车总成绩最大偏差：0.000000 秒
+```
+
+读到旧版本存档会直接拒绝并提示原因，而不是解析出半对半错的状态。
+赛道和车队配置不写——重开时从 `data/` 重新读，所以改配置不会让存档失效。
 
 ## 比赛数据表
 
@@ -567,7 +592,7 @@ JSON 解析器是 `data/Json.java` 里自己写的（不依赖任何第三方库
 大作业-test/
 ├─ build.bat     编译（javac 直接编译，只列入入口类）
 ├─ run.bat       开图形界面
-├─ test.bat      一键跑全部自测（172 项）
+├─ test.bat      一键跑全部自测（177 项）
 ├─ package.bat   打包成分发目录 + zip
 ├─ race-cli.bat  命令行版
 ├─ server.bat    联机服务器
@@ -622,7 +647,7 @@ JSON 解析器是 `data/Json.java` 里自己写的（不依赖任何第三方库
 | 配置数据 | `data/*.json`（赛道 / 车队 / 轮胎 / 天气，改数值不用重编译） |
 | 真实赛道图 | `data/tracks/*.svg`（8 条官方矢量图，来自 Wikimedia Commons） |
 | 运行库 | `lib/`（JavaFX 21 的 3 个 jar） |
-| 一键自测 | `test.bat`（172 项断言） |
+| 一键自测 | `test.bat`（177 项断言） |
 | 联机原型 | `server.bat` / `client.bat`，代码在 `src/main/java/com/endurance/net/` |
 | 分发包 | `package.bat` → `dist/endurance-strategy-v1.0.zip` |
 | 截图 | `screenshots/` |

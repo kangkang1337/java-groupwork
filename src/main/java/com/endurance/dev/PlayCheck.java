@@ -69,6 +69,7 @@ public final class PlayCheck {
         testTireRestrictions(data);
         testFuelOnlyPitStop(data);
         testStartTireLegality(data);
+        testSaveResumeConsistency(data);
         testSafetyCarTiming(data);
         testRedFlagPause(data);
         testSeedDeterminism(data);
@@ -156,6 +157,118 @@ public final class PlayCheck {
         check("全部 " + checkedCars + " 个车手起步轮胎合法"
                         + (offenders.isEmpty() ? "" : "（违规：" + offenders + "）"),
                 offenders.isEmpty());
+    }
+
+/**
+     * P0-4 验收：跑 N 圈存档 → 读档 → 跑完，必须和一口气跑完的结果逐车一致。
+     *
+     * <p>这一条同时证明了好几件事：随机数状态、逐圈记录、进站记录、旗语、
+     * 安全车、名次快照、AI 冷却都被完整保存了。少恢复任何一样，
+     * 读档后的比赛就会从分叉点开始跑出不同的成绩。</p>
+     */
+    private static void testSaveResumeConsistency(GameData data) {
+        java.util.Map<String, com.endurance.model.TireCompound> tireMap = new java.util.LinkedHashMap<>();
+        for (var tire : data.tires()) {
+            tireMap.put(tire.id(), tire);
+        }
+        long seed = 20260101L;
+        int totalLaps = 14;
+        int stopAt = 6;
+
+        // A：一口气跑完
+        var lineupA = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), totalLaps, seed, false, false);
+        var simA = new com.endurance.sim.RaceSimulator(lineupA.config(), lineupA.strategies());
+        var resultA = simA.run();
+        lineupA.close();
+
+        // B：跑到 stopAt 圈，存档
+        java.io.File saveFile = new java.io.File(".tmp/save-resume-test.json");
+        saveFile.getParentFile().mkdirs();
+        int lapsAtSave;
+        try {
+            var lineupB = com.endurance.setup.RaceSetup.build(
+                    data, data.defaultTrack(), totalLaps, seed, false, false);
+            var simB = new com.endurance.sim.RaceSimulator(lineupB.config(), lineupB.strategies());
+            for (int i = 0; i < stopAt; i++) {
+                simB.step();
+            }
+            lapsAtSave = simB.completedLaps();
+            com.endurance.data.RaceSave.save(simB, false, saveFile.toPath());
+            lineupB.close();
+        } catch (Exception e) {
+            check("存档写入成功（" + e.getMessage() + "）", false);
+            return;
+        }
+        check("存档写入成功（" + saveFile.length() / 1024 + " KB）", saveFile.length() > 0);
+
+        // C：新装配一场，读档后继续跑完
+        var lineupC = com.endurance.setup.RaceSetup.build(
+                data, data.defaultTrack(), totalLaps, seed, false, false);
+        var simC = new com.endurance.sim.RaceSimulator(lineupC.config(), lineupC.strategies());
+        try {
+            com.endurance.data.RaceSave.restore(saveFile, simC, tireMap);
+        } catch (Exception e) {
+            check("读档成功（" + e.getMessage() + "）", false);
+            lineupC.close();
+            return;
+        }
+        check("读档恢复到第 " + simC.completedLaps() + " 圈（存档时 " + lapsAtSave + " 圈）",
+                simC.completedLaps() == lapsAtSave);
+        check("读档恢复了历史逐圈记录（" + simC.lapResults().size() + " 条）",
+                simC.lapResults().size() > 0);
+
+        var resultC = simC.run();
+        lineupC.close();
+
+        // 逐车比较总成绩
+        java.util.Map<Integer, Double> timeA = new java.util.LinkedHashMap<>();
+        for (var entry : resultA.standings()) {
+            timeA.put(entry.car().number(), entry.totalTime());
+        }
+        int mismatched = 0;
+        double maxDelta = 0;
+        StringBuilder detail = new StringBuilder();
+        for (var entry : resultC.standings()) {
+            Double expected = timeA.get(entry.car().number());
+            if (expected == null) {
+                mismatched++;
+                continue;
+            }
+            double delta = Math.abs(expected - entry.totalTime());
+            maxDelta = Math.max(maxDelta, delta);
+            if (delta > 1e-6) {
+                mismatched++;
+                if (detail.length() < 80) {
+                    detail.append("#").append(entry.car().number())
+                            .append(" 差 ").append(String.format(java.util.Locale.ROOT, "%.3f", delta))
+                            .append("s ");
+                }
+            }
+        }
+        check(String.format(java.util.Locale.ROOT,
+                        "断点续跑与一口气跑完一致（最大偏差 %.6f 秒%s）",
+                        maxDelta, mismatched == 0 ? "" : "，" + detail),
+                mismatched == 0);
+
+        // 旧版本存档必须被拒绝，而不是解析出半对半错的状态
+        boolean rejected = false;
+        try {
+            java.nio.file.Files.writeString(saveFile.toPath(),
+                    "{\"version\":1,\"trackId\":\"imola\",\"completedLaps\":3}",
+                    java.nio.charset.StandardCharsets.UTF_8);
+            var lineupD = com.endurance.setup.RaceSetup.build(
+                    data, data.defaultTrack(), totalLaps, seed, false, false);
+            var simD = new com.endurance.sim.RaceSimulator(lineupD.config(), lineupD.strategies());
+            try {
+                com.endurance.data.RaceSave.restore(saveFile, simD, tireMap);
+            } finally {
+                lineupD.close();
+            }
+        } catch (java.io.IOException expected) {
+            rejected = expected.getMessage() != null && expected.getMessage().contains("版本");
+        }
+        check("旧版本存档被拒绝并提示原因", rejected);
     }
 
     /** P0-5：强制 3 圈安全车，必须恰好 3 圈，且第 4 圈不再处于安全车。 */
